@@ -1,0 +1,452 @@
+<!DOCTYPE html><html lang="en" style="width: 1280px; height: 1851px; overflow: hidden; position: relative;"><head><meta charset="utf-8"><meta content="width=device-width, initial-scale=1.0" name="viewport"><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script>
+    if (localStorage.getItem('theme') === 'light') {
+        document.documentElement.classList.remove('dark');
+    } else {
+        document.documentElement.classList.add('dark');
+    }
+</script>
+<style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}
+:root {
+    --color-background: 250 248 255;
+    --color-surface-lowest: 255 255 255;
+    --color-surface-low: 242 243 255;
+    --color-surface: 234 237 255;
+    --color-surface-high: 226 231 255;
+    --color-surface-highest: 218 226 253;
+    --color-on-surface: 19 27 46;
+    --color-on-surface-variant: 67 70 85;
+    --color-outline-variant: 195 198 215;
+    --color-outline: 115 118 134;
+    --color-primary: 0 74 198;
+    --color-primary-container: 37 99 235;
+    --color-on-primary: 255 255 255;
+    --color-secondary: 81 95 116;
+}
+html.dark {
+    /* Editorial Charcoal/Black Minimalist Palette from Spec */
+    --color-background: 18 19 22;              /* #121316 Deep Charcoal Black Canvas */
+    --color-surface-lowest: 21 22 27;          /* #15161b Elevated Card Background */
+    --color-surface-low: 26 28 34;             /* #1a1c22 Inset Metadata & Summary Box */
+    --color-surface: 32 34 42;                 /* #20222a Container/Pill Background */
+    --color-surface-high: 40 43 54;            /* #282b36 Hover Card / Inset */
+    --color-surface-highest: 50 54 68;         /* #323644 Active Row */
+    --color-on-surface: 234 232 225;           /* #eae8e1 Warm Crisp Off-White */
+    --color-on-surface-variant: 138 143 155;   /* #8a8f9b Cool Neutral Slate-Grey */
+    --color-outline-variant: 36 39 50;         /* #242732 Structural 1px Divider */
+    --color-outline: 68 72 88;                 /* #444858 Interactive Border */
+    --color-primary: 82 140 212;               /* #528cd4 Technical Slate/Cobalt Blue */
+    --color-primary-container: 70 125 195;     /* #467dc3 */
+    --color-on-primary: 255 255 255;
+    --color-secondary: 138 143 155;            /* #8a8f9b */
+}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        "colors": {
+                "background": "rgb(var(--color-background) / <alpha-value>)",
+                "error": "#ba1a1a",
+                "tertiary-fixed-dim": "#ffb596",
+                "primary": "rgb(var(--color-primary) / <alpha-value>)",
+                "secondary": "rgb(var(--color-secondary) / <alpha-value>)",
+                "on-secondary-container": "#57657a",
+                "surface-tint": "#0053db",
+                "on-secondary-fixed": "#0d1c2e",
+                "surface": "rgb(var(--color-background) / <alpha-value>)",
+                "on-secondary": "#ffffff",
+                "on-primary-container": "#eeefff",
+                "tertiary-container": "#bc4800",
+                "on-secondary-fixed-variant": "#3a485b",
+                "tertiary": "#943700",
+                "surface-container-highest": "rgb(var(--color-surface-highest) / <alpha-value>)",
+                "on-tertiary-fixed-variant": "#7d2d00",
+                "surface-container-lowest": "rgb(var(--color-surface-lowest) / <alpha-value>)",
+                "on-error": "#ffffff",
+                "on-tertiary": "#ffffff",
+                "on-background": "rgb(var(--color-on-surface) / <alpha-value>)",
+                "tertiary-fixed": "#ffdbcd",
+                "secondary-fixed-dim": "#b9c7df",
+                "on-tertiary-container": "#ffede6",
+                "secondary-fixed": "#d5e3fc",
+                "inverse-surface": "#283044",
+                "inverse-primary": "#b4c5ff",
+                "surface-container": "rgb(var(--color-surface) / <alpha-value>)",
+                "secondary-container": "#d5e3fc",
+                "primary-container": "rgb(var(--color-primary-container) / <alpha-value>)",
+                "on-primary": "rgb(var(--color-on-primary) / <alpha-value>)",
+                "outline": "rgb(var(--color-outline) / <alpha-value>)",
+                "primary-fixed-dim": "#b4c5ff",
+                "surface-dim": "#d2d9f4",
+                "on-error-container": "#93000a",
+                "on-surface": "rgb(var(--color-on-surface) / <alpha-value>)",
+                "surface-container-low": "rgb(var(--color-surface-low) / <alpha-value>)",
+                "on-surface-variant": "rgb(var(--color-on-surface-variant) / <alpha-value>)",
+                "outline-variant": "rgb(var(--color-outline-variant) / <alpha-value>)",
+                "surface-container-high": "rgb(var(--color-surface-high) / <alpha-value>)",
+                "surface-variant": "#dae2fd",
+                "error-container": "#ffdad6",
+                "on-primary-fixed-variant": "#003ea8",
+                "primary-fixed": "#dbe1ff",
+                "inverse-on-surface": "#eef0ff",
+                "surface-bright": "#faf8ff",
+                "on-primary-fixed": "#00174b"
+        },
+        "borderRadius": {
+                "DEFAULT": "0.125rem",
+                "lg": "0.25rem",
+                "xl": "0.5rem",
+                "full": "0.75rem"
+        },
+        "spacing": {
+                "space-sm": "0.5rem",
+                "space-xl": "2rem",
+                "space-base": "1rem",
+                "container-max": "1120px",
+                "space-2xs": "0.125rem",
+                "space-xs": "0.25rem",
+                "space-md": "0.75rem",
+                "space-lg": "1.5rem",
+                "space-2xl": "3rem"
+        },
+        "fontFamily": {
+                "label-sm": [
+                        "Geist"
+                ],
+                "body-md": [
+                        "Geist"
+                ],
+                "headline-xl": [
+                        "Geist"
+                ],
+                "headline-lg": [
+                        "Geist"
+                ],
+                "headline-sm": [
+                        "Geist"
+                ],
+                "code-sm": [
+                        "Geist"
+                ],
+                "body-sm": [
+                        "Geist"
+                ],
+                "body-lg": [
+                        "Geist"
+                ],
+                "label-md": [
+                        "Geist"
+                ]
+        },
+        "fontSize": {
+                "label-sm": [
+                        "11px",
+                        {
+                                "lineHeight": "14px",
+                                "letterSpacing": "0.04em",
+                                "fontWeight": "600"
+                        }
+                ],
+                "body-md": [
+                        "14px",
+                        {
+                                "lineHeight": "20px",
+                                "letterSpacing": "0em",
+                                "fontWeight": "400"
+                        }
+                ],
+                "headline-xl": [
+                        "28px",
+                        {
+                                "lineHeight": "36px",
+                                "letterSpacing": "-0.02em",
+                                "fontWeight": "600"
+                        }
+                ],
+                "headline-lg": [
+                        "22px",
+                        {
+                                "lineHeight": "28px",
+                                "letterSpacing": "-0.015em",
+                                "fontWeight": "600"
+                        }
+                ],
+                "headline-sm": [
+                        "16px",
+                        {
+                                "lineHeight": "24px",
+                                "letterSpacing": "-0.01em",
+                                "fontWeight": "600"
+                        }
+                ],
+                "code-sm": [
+                        "12px",
+                        {
+                                "lineHeight": "16px",
+                                "letterSpacing": "0em",
+                                "fontWeight": "400"
+                        }
+                ],
+                "body-sm": [
+                        "13px",
+                        {
+                                "lineHeight": "18px",
+                                "letterSpacing": "0em",
+                                "fontWeight": "400"
+                        }
+                ],
+                "body-lg": [
+                        "15px",
+                        {
+                                "lineHeight": "22px",
+                                "letterSpacing": "-0.005em",
+                                "fontWeight": "400"
+                        }
+                ],
+                "label-md": [
+                        "13px",
+                        {
+                                "lineHeight": "16px",
+                                "letterSpacing": "0.01em",
+                                "fontWeight": "500"
+                        }
+                ]
+        }
+},
+    },
+  }</script></head><body class="bg-surface-container-lowest text-on-surface font-body-md text-body-md min-h-screen"><header class="fixed top-0 left-0 right-0 z-50 bg-surface-container-lowest border-b border-outline-variant/50"><div class="h-14 max-w-[1120px] mx-auto px-space-base flex items-center justify-between"><div class="flex items-center gap-space-lg"><div class="flex items-center gap-space-sm"><img alt="Brand logo. - Primary color: #3b82f6
+- Font: geist
+- Mode: dark
+- Roundness: rounded-sm
+" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/AEtjO1W0wAU8zp2IiN-AJ9Mju43CboP7a-qI0YCLqnpTKRwlw7ujYz-kLFOT-DJBvg34Nm9eZcSWNVzJPfsBFuN9itdlUoOhunPQhWN1j2Q2uuMbM8_eLXjJK0YRSLyJoeaRxc-YVUXXODNNrqVC36a4MvjrrRNVC5E9hg4g_63nt-dOA1hVF3jwln1LxtoeGWXL03vn5wWqU5smqimgxpXoqmLlkyiG-S4MUXv8_tYraiuccWFcUj0fe4huCELM"><span class="font-headline-sm text-headline-sm text-on-surface font-semibold tracking-tight">Notifier</span></div></div><div class="flex items-center gap-space-md"><div class="hidden lg:flex items-center gap-space-xs text-on-surface-variant font-body-sm text-body-sm pr-space-sm border-r border-outline-variant/60"><span class="">Logged in as:</span><span class="font-medium text-on-surface">anishkumarverma</span></div><button id="theme-toggle" type="button" aria-label="Toggle theme" title="Toggle dark/light mode" class="w-8 h-8 rounded-full bg-surface-container-low border border-outline-variant/60 flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:border-outline transition-colors cursor-pointer mr-2"><span class="material-symbols-outlined text-[18px] dark:hidden">dark_mode</span><span class="material-symbols-outlined text-[18px] hidden dark:inline-block text-amber-400">light_mode</span></button><form action="/sync/" class="inline-flex m-0 p-0" method="post"><button class="inline-flex items-center justify-center bg-primary-container text-on-primary font-label-md text-label-md px-space-md py-space-xs rounded-lg hover:bg-primary transition-colors" type="submit">Sync New Emails</button></form><form action="/logout/" class="inline-flex m-0 p-0" method="post"><button class="inline-flex items-center justify-center bg-surface-container-lowest border border-outline-variant text-on-surface-variant font-label-md text-label-md px-space-md py-space-xs rounded-lg hover:bg-surface-container-low hover:text-on-surface transition-colors" type="submit">Logout</button></form><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center flex-shrink-0"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main class="w-full pt-14 bg-surface-container-lowest min-h-[calc(100vh-56px)]"><div class="flex flex-col w-full">
+<div class="w-full max-w-[1120px] mx-auto px-space-base py-space-xl">
+<!-- Sub-navigation & View Switcher Bar -->
+<div class="flex flex-col sm:flex-row sm:items-center justify-between pb-space-md mb-space-xl border-b border-outline-variant/60 gap-space-md">
+<div class="flex items-center gap-space-lg">
+<a class="inline-flex items-center gap-space-xs font-label-md text-label-md font-semibold text-primary pb-space-sm border-b-2 border-primary -mb-[9px]" href="#relevant">
+<span class="material-symbols-outlined text-[18px]">verified</span>
+<span class="">Relevant Emails (7)</span>
+</a>
+<a class="inline-flex items-center gap-space-xs font-label-md text-label-md text-on-surface-variant hover:text-on-surface transition-colors pb-space-sm -mb-[9px]" href="?tab=all">
+<span class="material-symbols-outlined text-[18px]">mark_email_unread</span>
+<span class="">All Emails (13)</span>
+</a>
+</div>
+<div class="flex items-center gap-space-sm self-start sm:self-auto">
+<span class="inline-flex items-center px-space-xs py-0.5 rounded text-[11px] font-medium bg-surface-container text-on-surface-variant">
+          Auto-filter Active
+        </span>
+<span class="text-outline-variant font-code-sm text-code-sm">•</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Model: GPT-4o-mini</span>
+</div>
+</div>
+<!-- Main Heading Section -->
+<div class="mb-space-lg flex flex-col md:flex-row md:items-end justify-between gap-space-sm">
+<div>
+<h1 class="font-headline-lg text-headline-lg text-on-surface tracking-tight">
+          Relevant Emails Matched to Your Topics
+        </h1>
+<p class="font-body-md text-body-md text-on-surface-variant mt-1">
+          High-priority incoming mail extracted and synthesized by your subscribed interest triggers.
+        </p>
+</div>
+<div class="text-right">
+<span class="font-code-sm text-code-sm text-on-surface-variant bg-surface-container-low px-space-sm py-1 rounded">
+          Sync Status: 3 New Today
+        </span>
+</div>
+</div>
+<!-- Django Backend Diagnostic Graphic Reference Preview -->
+
+<!-- List of AI-matched email items (EmailMatch + Email Model View) -->
+<div class="flex flex-col gap-space-lg">
+<!-- Email Match Item 1 -->
+<article class="bg-surface-container-lowest rounded-lg border border-outline-variant/70 shadow-sm hover:border-outline transition-all duration-150 p-space-lg">
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-space-xs mb-space-xs">
+<h2 class="font-headline-sm text-headline-sm text-on-surface font-semibold tracking-tight">
+<a class="text-primary hover:text-primary-container transition-colors inline-flex items-center gap-space-xs" href="/emails/1/">
+<span class="text-on-surface font-medium">[Gmail]</span>
+<span class="">Machine Learning Job</span>
+</a>
+</h2>
+<span class="inline-flex items-center gap-1 bg-[#f0fdf4] text-[#15803d] border border-[#bbf7d0] px-2 py-0.5 rounded text-[11px] font-semibold w-fit">
+<span class="w-1.5 h-1.5 rounded-full bg-[#15803d]"></span>
+            98% Topic Match
+          </span>
+</div>
+<!-- Metadata Line -->
+<div class="font-code-sm text-code-sm text-on-surface-variant/90 mb-space-base flex flex-wrap items-center gap-x-2 gap-y-1 pb-space-sm border-b border-outline-variant/30">
+<span class="font-medium text-on-surface">Platform:</span> Gmail
+          <span class="text-outline-variant">|</span>
+<span class="font-medium text-on-surface">Topic:</span>
+<span class="bg-surface-container px-1.5 py-0.5 rounded text-on-surface font-semibold">Jobs</span>
+<span class="text-outline-variant">|</span>
+<span class="font-medium text-on-surface">Sender:</span> Anish Kumar Verma &lt;kumaranish89457@gmail.com&gt;
+          <span class="text-outline-variant">|</span>
+<span class="font-medium text-on-surface">Received:</span> Sept. 3, 2026, 10:12 a.m.
+        </div>
+<!-- AI Summary & Action Items Box -->
+<div class="bg-surface-container-low/60 rounded-md border border-outline-variant/60 p-space-md mb-space-md">
+<div class="space-y-space-md">
+<div>
+<h3 class="font-code-sm text-[12px] font-semibold tracking-wide text-on-surface-variant uppercase mb-1">
+                Summary
+              </h3>
+<p class="font-body-md text-body-md text-on-surface">
+                An invitation has been extended for a Machine Learning internship position at the sender's company. The email serves as an initial outreach to welcome the candidate to join the team.
+              </p>
+</div>
+<div>
+<h3 class="font-code-sm text-[12px] font-semibold tracking-wide text-on-surface-variant uppercase mb-1.5">
+                Action Items &amp; Takeaways
+              </h3>
+<ul class="list-disc list-outside ml-space-base space-y-1 font-body-sm text-body-sm text-on-surface">
+<li class="">Review the invitation to join the company as a Machine Learning intern.</li>
+<li class="">Respond to the sender to express interest and request further details regarding the internship.</li>
+</ul>
+</div>
+
+</div>
+</div>
+<!-- Action Link -->
+<div class="flex items-center justify-between pt-space-xs">
+<a class="inline-flex items-center gap-1 font-label-md text-label-md font-medium text-primary hover:underline" href="/emails/1/">
+<span class="">Read Full Email</span>
+<span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+</a>
+<span class="font-code-sm text-[11px] text-on-surface-variant">ID: msg_01J6XTG8</span>
+</div>
+</article>
+<!-- Email Match Item 2 -->
+<article class="bg-surface-container-lowest rounded-lg border border-outline-variant/70 shadow-sm hover:border-outline transition-all duration-150 p-space-lg">
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-space-xs mb-space-xs">
+<h2 class="font-headline-sm text-headline-sm text-on-surface font-semibold tracking-tight">
+<a class="text-primary hover:text-primary-container transition-colors inline-flex items-center gap-space-xs" href="/emails/2/">
+<span class="text-on-surface font-medium">[Gmail]</span>
+<span class="">Data Scientist at Celonis and 11 more jobs in Bengaluru for you. Apply Now.</span>
+</a>
+</h2>
+<span class="inline-flex items-center gap-1 bg-[#f0fdf4] text-[#15803d] border border-[#bbf7d0] px-2 py-0.5 rounded text-[11px] font-semibold w-fit">
+<span class="w-1.5 h-1.5 rounded-full bg-[#15803d]"></span>
+            91% Topic Match
+          </span>
+</div>
+<!-- Metadata Line -->
+<div class="font-code-sm text-code-sm text-on-surface-variant/90 mb-space-base flex flex-wrap items-center gap-x-2 gap-y-1 pb-space-sm border-b border-outline-variant/30">
+<span class="font-medium text-on-surface">Platform:</span> Gmail
+          <span class="text-outline-variant">|</span>
+<span class="font-medium text-on-surface">Topic:</span>
+<span class="bg-surface-container px-1.5 py-0.5 rounded text-on-surface font-semibold">Jobs</span>
+<span class="text-outline-variant">|</span>
+<span class="font-medium text-on-surface">Sender:</span> Glassdoor Jobs &lt;noreply@glassdoor.com&gt;
+          <span class="text-outline-variant">|</span>
+<span class="font-medium text-on-surface">Received:</span> Sept. 3, 2026, 7:01 a.m.
+        </div>
+<!-- AI Summary & Action Items Box -->
+<div class="bg-surface-container-low/60 rounded-md border border-outline-variant/60 p-space-md mb-space-md">
+<div class="space-y-space-md">
+<div>
+<h3 class="font-code-sm text-[12px] font-semibold tracking-wide text-on-surface-variant uppercase mb-1">
+                Summary
+              </h3>
+<p class="font-body-md text-body-md text-on-surface">
+                Curated job digest with 12 open data science and machine learning positions in tech hubs.
+              </p>
+</div>
+<div>
+<h3 class="font-code-sm text-[12px] font-semibold tracking-wide text-on-surface-variant uppercase mb-1.5">
+                Action Items &amp; Takeaways
+              </h3>
+<ul class="list-disc list-outside ml-space-base space-y-1 font-body-sm text-body-sm text-on-surface">
+<li class="">Review matching job descriptions and submit resumes for priority listings before closing date.</li>
+</ul>
+</div>
+
+</div>
+</div>
+<!-- Action Link -->
+<div class="flex items-center justify-between pt-space-xs">
+<a class="inline-flex items-center gap-1 font-label-md text-label-md font-medium text-primary hover:underline" href="/emails/2/">
+<span class="">Read Full Email</span>
+<span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+</a>
+<span class="font-code-sm text-[11px] text-on-surface-variant">ID: msg_01J6WPB2</span>
+</div>
+</article>
+<!-- Email Match Item 3 -->
+<article class="bg-surface-container-lowest rounded-lg border border-outline-variant/70 shadow-sm hover:border-outline transition-all duration-150 p-space-lg">
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-space-xs mb-space-xs">
+<h2 class="font-headline-sm text-headline-sm text-on-surface font-semibold tracking-tight">
+<a class="text-primary hover:text-primary-container transition-colors inline-flex items-center gap-space-xs" href="/emails/3/">
+<span class="text-on-surface font-medium">[Gmail]</span>
+<span class="">AI/ML Engineer @ Vizzle</span>
+</a>
+</h2>
+<span class="inline-flex items-center gap-1 bg-[#f0fdf4] text-[#15803d] border border-[#bbf7d0] px-2 py-0.5 rounded text-[11px] font-semibold w-fit">
+<span class="w-1.5 h-1.5 rounded-full bg-[#15803d]"></span>
+            88% Topic Match
+          </span>
+</div>
+<!-- Metadata Line -->
+<div class="font-code-sm text-code-sm text-on-surface-variant/90 mb-space-base flex flex-wrap items-center gap-x-2 gap-y-1 pb-space-sm border-b border-outline-variant/30">
+<span class="font-medium text-on-surface">Platform:</span> Gmail
+          <span class="text-outline-variant">|</span>
+<span class="font-medium text-on-surface">Topic:</span>
+<span class="bg-surface-container px-1.5 py-0.5 rounded text-on-surface font-semibold">Jobs</span>
+<span class="text-outline-variant">|</span>
+<span class="font-medium text-on-surface">Sender:</span> Indeed &lt;donotreply@match.indeed.com&gt;
+          <span class="text-outline-variant">|</span>
+<span class="font-medium text-on-surface">Received:</span> Sept. 3, 2026, 5:28 a.m.
+        </div>
+<!-- AI Summary & Action Items Box -->
+<div class="bg-surface-container-low/60 rounded-md border border-outline-variant/60 p-space-md mb-space-md">
+<div class="space-y-space-md">
+<div>
+<h3 class="font-code-sm text-[12px] font-semibold tracking-wide text-on-surface-variant uppercase mb-1">
+                Summary
+              </h3>
+<p class="font-body-md text-body-md text-on-surface">
+                Direct application invitation for an AI/ML engineering role matching your background.
+              </p>
+</div>
+
+</div>
+</div>
+<!-- Action Link -->
+<div class="flex items-center justify-between pt-space-xs">
+<a class="inline-flex items-center gap-1 font-label-md text-label-md font-medium text-primary hover:underline" href="/emails/3/">
+<span class="">Read Full Email</span>
+<span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+</a>
+<span class="font-code-sm text-[11px] text-on-surface-variant">ID: msg_01J6VAA4</span>
+</div>
+</article>
+</div>
+<!-- Utilitarian Pagination / Results Footer -->
+<div class="mt-space-xl pt-space-md border-t border-outline-variant/60 flex flex-col sm:flex-row items-center justify-between text-on-surface-variant font-body-sm text-body-sm gap-space-sm">
+<span class="">Showing 3 of 7 matched emails across 1 active topic.</span>
+<div class="flex items-center gap-space-xs">
+<button class="px-space-md py-1 border border-outline-variant/40 rounded text-outline cursor-not-allowed bg-surface-container-low font-label-md text-label-md" disabled="" type="button">
+          Previous
+        </button>
+<button class="px-space-md py-1 border border-outline-variant rounded text-on-surface hover:bg-surface-container-low transition-colors font-label-md text-label-md" type="button">
+          Next
+        </button>
+</div>
+</div>
+</div>
+</div></main><footer class="w-full border-t border-outline-variant/40 bg-surface-container-lowest py-space-base"><div class="max-w-[1120px] mx-auto px-space-base flex flex-col sm:flex-row items-center justify-between text-on-surface-variant font-body-sm text-body-sm gap-space-sm"><div class="">Notifier © 2024. Utilitarian Email Management.</div><div class="flex items-center gap-space-base"><a class="hover:text-on-surface transition-colors" data-path="inbox" href="#">Inbox</a><a class="hover:text-on-surface transition-colors" data-path="profile-topics" href="#">Profile &amp; Topics</a></div></div></footer>
+
+<div id="snapdom-sandbox" data-snapdom-sandbox="true" aria-hidden="true" style="position: absolute; left: -9999px; top: -9999px; width: 0px; height: 0px; overflow: hidden;"></div>
+<script>
+    document.getElementById('theme-toggle')?.addEventListener('click', function() {
+        if (document.documentElement.classList.contains('dark')) {
+            document.documentElement.classList.remove('dark');
+            localStorage.setItem('theme', 'light');
+        } else {
+            document.documentElement.classList.add('dark');
+            localStorage.setItem('theme', 'dark');
+        }
+    });
+</script>
+</body></html>

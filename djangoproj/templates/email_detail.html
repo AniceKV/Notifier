@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>{{ email.subject }} - Notifier</title>
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <script>
+        if (localStorage.getItem('theme') === 'light') {
+            document.documentElement.classList.remove('dark');
+        } else {
+            document.documentElement.classList.add('dark');
+        }
+    </script>
+    <style>
+        :root {
+            --color-background: 250 248 255;
+            --color-surface-lowest: 255 255 255;
+            --color-surface-low: 242 243 255;
+            --color-surface: 234 237 255;
+            --color-surface-high: 226 231 255;
+            --color-surface-highest: 218 226 253;
+            --color-on-surface: 19 27 46;
+            --color-on-surface-variant: 67 70 85;
+            --color-outline-variant: 195 198 215;
+            --color-outline: 115 118 134;
+            --color-primary: 0 74 198;
+            --color-primary-container: 37 99 235;
+            --color-on-primary: 255 255 255;
+            --color-secondary: 81 95 116;
+        }
+
+        html.dark {
+            /* Editorial Charcoal/Black Minimalist Palette from Spec */
+            --color-background: 18 19 22;              /* #121316 Deep Charcoal Black Canvas */
+            --color-surface-lowest: 21 22 27;          /* #15161b Elevated Card Background */
+            --color-surface-low: 26 28 34;             /* #1a1c22 Inset Metadata & Summary Box */
+            --color-surface: 32 34 42;                 /* #20222a Container/Pill Background */
+            --color-surface-high: 40 43 54;            /* #282b36 Hover Card / Inset */
+            --color-surface-highest: 50 54 68;         /* #323644 Active Row */
+            --color-on-surface: 234 232 225;           /* #eae8e1 Warm Crisp Off-White */
+            --color-on-surface-variant: 138 143 155;   /* #8a8f9b Cool Neutral Slate-Grey */
+            --color-outline-variant: 36 39 50;         /* #242732 Structural 1px Divider */
+            --color-outline: 68 72 88;                 /* #444858 Interactive Border */
+            --color-primary: 82 140 212;               /* #528cd4 Technical Slate/Cobalt Blue */
+            --color-primary-container: 70 125 195;     /* #467dc3 */
+            --color-on-primary: 255 255 255;
+            --color-secondary: 138 143 155;            /* #8a8f9b */
+        }
+
+        html.dark select option {
+            background-color: #1a1c22;
+            color: #eae8e1;
+        }
+    </style>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script id="tailwind-config">
+    tailwind.config = {
+        darkMode: "class",
+        theme: {
+            extend: {
+                colors: {
+                    "background": "rgb(var(--color-background) / <alpha-value>)",
+                    "surface": "rgb(var(--color-background) / <alpha-value>)",
+                    "surface-container-lowest": "rgb(var(--color-surface-lowest) / <alpha-value>)",
+                    "surface-container-low": "rgb(var(--color-surface-low) / <alpha-value>)",
+                    "surface-container": "rgb(var(--color-surface) / <alpha-value>)",
+                    "surface-container-high": "rgb(var(--color-surface-high) / <alpha-value>)",
+                    "surface-container-highest": "rgb(var(--color-surface-highest) / <alpha-value>)",
+                    "on-surface": "rgb(var(--color-on-surface) / <alpha-value>)",
+                    "on-surface-variant": "rgb(var(--color-on-surface-variant) / <alpha-value>)",
+                    "outline": "rgb(var(--color-outline) / <alpha-value>)",
+                    "outline-variant": "rgb(var(--color-outline-variant) / <alpha-value>)",
+                    "primary": "rgb(var(--color-primary) / <alpha-value>)",
+                    "primary-container": "rgb(var(--color-primary-container) / <alpha-value>)",
+                    "on-primary": "rgb(var(--color-on-primary) / <alpha-value>)",
+                    "secondary": "rgb(var(--color-secondary) / <alpha-value>)",
+                    "error": "#ba1a1a",
+                    "error-container": "#ffdad6",
+                    "on-error": "#ffffff",
+                },
+                borderRadius: {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.375rem",
+                    "xl": "0.5rem",
+                    "full": "9999px"
+                },
+                spacing: {
+                    "space-2xs": "0.125rem",
+                    "space-xs": "0.25rem",
+                    "space-sm": "0.5rem",
+                    "space-md": "0.75rem",
+                    "space-base": "1rem",
+                    "space-lg": "1.5rem",
+                    "space-xl": "2rem",
+                    "space-2xl": "3rem"
+                },
+                fontFamily: {
+                    sans: ["Geist", "Inter", "sans-serif"],
+                }
+            }
+        }
+    };
+    </script>
+    <style>
+        .email-iframe-wrapper {
+            background-color: #ffffff;
+            border-radius: 0.375rem;
+            width: 100%;
+            overflow: hidden;
+            border: 1px solid rgb(var(--color-outline-variant) / 0.6);
+        }
+        #email-frame {
+            width: 100%;
+            min-height: 550px;
+            border: none;
+            display: block;
+            background-color: #ffffff;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-sans min-h-screen">
+    <!-- Top Global Header (Identical across all views) -->
+    <header class="fixed top-0 left-0 right-0 z-50 bg-surface-container-lowest border-b border-outline-variant/60 shadow-xs">
+        <div class="h-14 max-w-[1120px] mx-auto px-4 sm:px-6 flex items-center justify-between">
+            <div class="flex items-center gap-6">
+                <a href="{% url 'inbox' %}" class="flex items-center gap-2 text-primary font-bold text-lg tracking-tight">
+                    <span class="material-symbols-outlined text-[24px]">mark_email_unread</span>
+                    <span>Notifier</span>
+                </a>
+            </div>
+
+            <div class="flex items-center gap-3">
+                <div class="hidden lg:flex items-center gap-1.5 text-xs text-on-surface-variant pr-3 border-r border-outline-variant/60">
+                    <span>Logged in as:</span>
+                    <span class="font-semibold text-on-surface">{{ request.user.username }}</span>
+                </div>
+
+                <!-- Theme Toggle Button -->
+                <button id="theme-toggle" type="button" aria-label="Toggle theme" title="Toggle dark/light mode"
+                        class="w-8 h-8 rounded-full bg-surface-container-low border border-outline-variant/60 flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:border-outline transition-colors cursor-pointer">
+                    <span class="material-symbols-outlined text-[18px] dark:hidden">dark_mode</span>
+                    <span class="material-symbols-outlined text-[18px] hidden dark:inline-block text-amber-400">light_mode</span>
+                </button>
+                
+                <form action="{% url 'sync_emails' %}" method="post" class="inline-flex m-0">
+                    {% csrf_token %}
+                    <button type="submit" class="inline-flex items-center gap-1 bg-primary-container text-on-primary text-xs font-semibold px-3 py-1.5 rounded hover:bg-primary transition-colors shadow-xs">
+                        <span class="material-symbols-outlined text-[16px]">sync</span>
+                        <span>Sync Emails</span>
+                    </button>
+                </form>
+
+                <form action="/accounts/logout/" method="post" class="inline-flex m-0">
+                    {% csrf_token %}
+                    <button type="submit" class="inline-flex items-center text-xs font-medium bg-surface-container-low text-on-surface-variant hover:text-on-surface px-2.5 py-1.5 rounded border border-outline-variant/60 transition-colors">
+                        Logout
+                    </button>
+                </form>
+
+                <a href="{% url 'profile' %}" class="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center text-primary hover:bg-primary hover:text-white transition-colors">
+                    <span class="material-symbols-outlined text-[18px]">person</span>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Viewport Stage -->
+    <main class="w-full pt-20 pb-16 min-h-screen">
+        <div class="max-w-[1120px] mx-auto px-4 sm:px-6">
+
+            <!-- Sub-navigation & Breadcrumb Bar -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-3 mb-6 border-b border-outline-variant/60 gap-4">
+                <div class="flex items-center gap-4">
+                    <a href="{% url 'inbox' %}" class="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:bg-surface-container-low px-2.5 py-1.5 rounded border border-outline-variant/60 transition-colors">
+                        <span class="material-symbols-outlined text-[16px]">arrow_back</span>
+                        <span>Back to Inbox</span>
+                    </a>
+                    <div class="flex items-center gap-2 text-xs text-on-surface-variant truncate max-w-lg">
+                        <a href="{% url 'inbox' %}" class="hover:text-primary transition-colors">Inbox</a>
+                        <span>/</span>
+                        <span class="text-on-surface font-semibold truncate">{{ email.subject }}</span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 text-xs text-on-surface-variant">
+                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-surface-container font-medium text-on-surface">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                        Gmail Synced
+                    </span>
+                    <span>•</span>
+                    <span>HTML View</span>
+                </div>
+            </div>
+
+            <!-- Subject & Metadata Container -->
+            <div class="bg-surface-container-lowest rounded-lg border border-outline-variant/80 p-6 shadow-xs mb-6 w-full">
+                <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-3 pb-4 border-b border-outline-variant/40">
+                    <div class="space-y-2">
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs px-2.5 py-0.5 rounded bg-surface-container text-on-surface font-semibold">
+                                {{ email.platform }}
+                            </span>
+                            {% if matches %}
+                                <span class="inline-flex items-center gap-1 bg-[#f0fdf4] text-[#15803d] border border-[#bbf7d0] px-2.5 py-0.5 rounded text-[11px] font-semibold">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-[#15803d]"></span>
+                                    Topic Match Verified
+                                </span>
+                            {% endif %}
+                        </div>
+                        <h1 class="text-xl sm:text-2xl font-bold text-on-surface tracking-tight leading-snug">
+                            {{ email.subject }}
+                        </h1>
+                    </div>
+                    <span class="text-xs font-mono text-on-surface-variant shrink-0 whitespace-nowrap bg-surface-container-low px-2 py-1 rounded">
+                        {{ email.received_at }}
+                    </span>
+                </div>
+
+                <!-- Sender & Recipient Details -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 text-xs">
+                    <div>
+                        <span class="text-on-surface-variant block font-medium mb-0.5">From:</span>
+                        <div class="font-semibold text-on-surface">{{ email.sender }}</div>
+                    </div>
+                    {% if email.recipient %}
+                        <div>
+                            <span class="text-on-surface-variant block font-medium mb-0.5">To:</span>
+                            <div class="text-on-surface">{{ email.recipient }}</div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- AI Relevancy Brief Card (If Matched) -->
+            {% if matches %}
+                <div class="bg-gradient-to-r from-blue-50/70 to-indigo-50/50 rounded-lg border border-primary-container/40 p-5 shadow-xs mb-6 w-full">
+                    <div class="flex items-center gap-2 text-primary font-bold text-sm uppercase tracking-wider mb-3">
+                        <span class="material-symbols-outlined text-[20px]">psychology</span>
+                        <span>AI Relevancy &amp; Action Items Brief</span>
+                    </div>
+
+                    <div class="space-y-4">
+                        {% for match in matches %}
+                            <div class="bg-surface-container-lowest rounded border border-outline-variant/50 p-4 shadow-2xs">
+                                <div class="flex items-center justify-between gap-2 mb-2 pb-2 border-b border-outline-variant/30">
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-xs text-on-surface-variant font-medium">Matched Topic:</span>
+                                        <span class="text-xs px-2 py-0.5 bg-primary/10 text-primary font-semibold rounded">
+                                            {{ match.topic.name }}
+                                        </span>
+                                    </div>
+                                    <span class="text-[11px] font-mono text-secondary">
+                                        Synced: {{ match.created_at }}
+                                    </span>
+                                </div>
+                                <div class="text-xs text-on-surface leading-relaxed font-sans">
+                                    {{ match.formatted_summary_html }}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
+
+            <!-- Full Email Body Content Stage -->
+            <div class="bg-surface-container-lowest rounded-lg border border-outline-variant/80 p-5 sm:p-7 shadow-xs w-full">
+                <div class="flex items-center justify-between pb-3.5 mb-3.5 border-b border-outline-variant/40">
+                    <div class="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-secondary">
+                        <span class="material-symbols-outlined text-[18px]">article</span>
+                        <span>Message Body</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs text-on-surface-variant bg-surface-container px-2 py-0.5 rounded font-medium">Sandboxed View</span>
+                        <a href="{% url 'email_content' email.id %}" target="_blank" rel="noopener noreferrer"
+                           class="text-xs font-medium text-primary hover:underline inline-flex items-center gap-0.5">
+                            <span>Open in New Tab</span>
+                            <span class="material-symbols-outlined text-[13px]">open_in_new</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Sandboxed email frame (Prevents CSS style leakage & ensures perfect legibility) -->
+                {{ email.body|json_script:"email-body-data" }}
+                <div class="email-iframe-wrapper">
+                    <iframe id="email-frame"
+                            title="Email Message Body"
+                            sandbox="allow-same-origin allow-popups"
+                            style="width: 100%; min-height: 550px; border: none; background: #ffffff; display: block;">
+                    </iframe>
+                </div>
+            </div>
+
+            <!-- Footer Navigation -->
+            <div class="mt-6 flex items-center justify-between">
+                <a href="{% url 'inbox' %}" class="inline-flex items-center gap-1.5 px-4 py-2 rounded border border-outline-variant/70 text-xs font-semibold text-on-surface hover:bg-surface-container-low transition-colors">
+                    <span class="material-symbols-outlined text-[16px]">arrow_back</span>
+                    <span>Return to Inbox</span>
+                </a>
+                <a href="{% url 'profile' %}" class="text-xs font-medium text-primary hover:underline">
+                    Manage Topic Filters &rarr;
+                </a>
+            </div>
+
+        </div>
+    </main>
+
+    <script>
+        document.getElementById('theme-toggle')?.addEventListener('click', function() {
+            if (document.documentElement.classList.contains('dark')) {
+                document.documentElement.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            } else {
+                document.documentElement.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            }
+        });
+
+        // In-memory sandboxed rendering with dynamic height adjustment
+        const emailDataElement = document.getElementById('email-body-data');
+        const emailFrame = document.getElementById('email-frame');
+
+        if (emailDataElement && emailFrame) {
+            let emailContent = JSON.parse(emailDataElement.textContent) || '';
+            
+            // If plain text without HTML tags, wrap in clean readable document
+            if (!emailContent.toLowerCase().includes('<html') && 
+                !emailContent.toLowerCase().includes('<div') && 
+                !emailContent.toLowerCase().includes('<p')) {
+                emailContent = `<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            font-size: 14px;
+            line-height: 1.6;
+            color: #1a1a1a;
+            background-color: #ffffff;
+            padding: 24px;
+            margin: 0;
+            word-break: break-word;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>${emailContent.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</body>
+</html>`;
+            }
+
+            emailFrame.srcdoc = emailContent;
+
+            function adjustFrameHeight() {
+                try {
+                    const doc = emailFrame.contentDocument || emailFrame.contentWindow.document;
+                    if (doc && doc.body) {
+                        const h = Math.max(doc.body.scrollHeight, doc.documentElement.scrollHeight, 400);
+                        emailFrame.style.height = (h + 30) + 'px';
+                        
+                        const links = doc.querySelectorAll('a');
+                        links.forEach(a => {
+                            if (!a.getAttribute('target')) {
+                                a.setAttribute('target', '_blank');
+                                a.setAttribute('rel', 'noopener noreferrer');
+                            }
+                        });
+                    }
+                } catch (e) {
+                    console.warn('Iframe resize notice:', e);
+                }
+            }
+
+            emailFrame.addEventListener('load', () => {
+                adjustFrameHeight();
+                setTimeout(adjustFrameHeight, 300);
+                setTimeout(adjustFrameHeight, 1000);
+            });
+        }
+    </script>
+</body>
+</html>

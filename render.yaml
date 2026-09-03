@@ -1,0 +1,70 @@
+databases:
+  - name: notifier-db
+    databaseName: notifier
+    user: notifier
+    plan: free
+
+services:
+  # Redis Queue Broker
+  - type: redis
+    name: notifier-redis
+    ipAllowList: []
+    plan: free
+    maxmemoryPolicy: noeviction
+
+  # Web Application
+  - type: web
+    name: notifier-web
+    runtime: python
+    plan: free
+    buildCommand: ./build.sh
+    startCommand: cd djangoproj && gunicorn djangoproj.wsgi:application
+    envVars:
+      - key: DJANGO_DEBUG
+        value: "false"
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL
+        fromDatabase:
+          name: notifier-db
+          property: connectionString
+      - key: CELERY_BROKER_URL
+        fromService:
+          type: redis
+          name: notifier-redis
+          property: connectionString
+      - key: CELERY_RESULT_BACKEND
+        fromService:
+          type: redis
+          name: notifier-redis
+          property: connectionString
+
+  # Background Worker + Beat Combined Service
+  - type: worker
+    name: notifier-worker
+    runtime: python
+    plan: starter
+    buildCommand: pip install -r requirements.txt
+    startCommand: cd djangoproj && celery -A djangoproj worker -B -l info
+    envVars:
+      - key: DJANGO_DEBUG
+        value: "false"
+      - key: SECRET_KEY
+        fromService:
+          type: web
+          name: notifier-web
+          envVarKey: SECRET_KEY
+      - key: DATABASE_URL
+        fromDatabase:
+          name: notifier-db
+          property: connectionString
+      - key: CELERY_BROKER_URL
+        fromService:
+          type: redis
+          name: notifier-redis
+          property: connectionString
+      - key: CELERY_RESULT_BACKEND
+        fromService:
+          type: redis
+          name: notifier-redis
+          property: connectionString

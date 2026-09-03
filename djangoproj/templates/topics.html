@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>All the Topics</title>
+
+</head>
+<body>
+<h2>Welcome {{request.user.username}}</h2>
+{% for x in all_topics%}
+    <h3>{{x.name}}</h3>
+        <p>
+            {{x.description}}
+        </p>
+        <a href="{% url 'edit_topic' x.id %}">Edit</a>
+        <a href="{% url 'topic_detail' x.id %}">Detail</a>
+    <form method="POST" action="{% url 'delete_topic' x.id %}">
+        {% csrf_token %}
+        <button type="submit">Delete</button>
+    </form>
+    <br>
+
+{% endfor %}
+
+<br>
+
+<a href="{% url 'create_topic' %}"> create new topic</a>
+
+<!--<form method="POST" action="{% url 'create_topic' %}/">-->
+<!--    {% csrf_token %}-->
+
+<!--    {{form.as_p}}-->
+
+<!--    <button type="submit">Create Topic</button>-->
+<!--</form>-->
+
+<br>
+<form method="post" action="/accounts/logout/">
+    {% csrf_token %}
+    <button>Logout</button>
+</form>
+
+<div>
+  {% for message in messages %}
+    <div>{{ message }}</div>
+  {% endfor %}
+</div>
+
+</body>
+</html>

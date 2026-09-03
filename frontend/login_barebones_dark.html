@@ -1,0 +1,215 @@
+<!DOCTYPE html><html class="h-full bg-[#121316] text-[#f4f3ee] antialiased" lang="en" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Notifier — Secure Authentication (Editorial Dark Paper)</title>
+<!-- Google Fonts: Newsreader (Editorial Serif) & JetBrains Mono (Technical Metadata) -->
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,600;1,400&amp;family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&amp;family=Plus+Jakarta+Sans:wght@300;400;500;600&amp;display=swap" rel="stylesheet">
+<!-- Tailwind CSS v3 with plugins -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Configuration -->
+<script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            serif: ['"Newsreader"', 'Georgia', 'serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+            sans: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
+          },
+          colors: {
+            canvas: '#121316',
+            paper: {
+              card: '#181a20',
+              elevated: '#1e2128',
+              surface: '#131418',
+            },
+            parchment: {
+              DEFAULT: '#f4f3ee',
+              muted: '#9da0aa',
+              dim: '#656873',
+            },
+            accent: {
+              amber: '#d97706',
+              warm: '#f59e0b',
+              terracotta: '#ea580c',
+              blue: '#3b82f6',
+              emerald: '#10b981',
+            },
+            border: {
+              subtle: '#272930',
+              faint: 'rgba(255, 255, 255, 0.08)',
+            }
+          }
+        }
+      }
+    };
+  </script>
+<!-- Custom Styles for Editorial Dark Paper Nuances -->
+<style data-purpose="editorial-paper-effects">
+    /* Subtle paper texture simulation */
+    .editorial-paper-grid {
+      background-image: radial-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 0);
+      background-size: 28px 28px;
+    }
+    .hairline-border {
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .custom-input:focus {
+      border-color: rgba(217, 119, 6, 0.6);
+      box-shadow: 0 0 0 1px rgba(217, 119, 6, 0.4);
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between bg-[#121316] text-[#f4f3ee] font-sans selection:bg-[#d97706] selection:text-[#121316] editorial-paper-grid">
+<!-- BEGIN: TopHeader -->
+<header class="w-full border-b border-[#272930] bg-[#141518]/90 backdrop-blur-sm z-20">
+<div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+<!-- Brand Logo & Studio Subtitle -->
+<div class="flex items-center space-x-3.5">
+<div class="w-8 h-8 rounded bg-[#f4f3ee] text-[#121316] flex items-center justify-center font-serif text-lg font-bold shadow-sm">
+          N
+        </div>
+
+</div>
+<!-- Live Engine Telemetry Pill -->
+<div class="hidden sm:flex items-center space-x-4 font-mono text-xs">
+<div class="flex items-center space-x-2 px-3 py-1 rounded-full bg-[#1a1c22] border border-[#272930]">
+<span class="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+
+</div>
+<div class="flex items-center space-x-2 px-3 py-1 rounded-full bg-[#1a1c22] border border-[#272930]">
+<span class="inline-block w-1.5 h-1.5 rounded-full bg-[#3b82f6]"></span>
+
+</div>
+</div>
+<!-- Auxiliary Links -->
+<div class="flex items-center space-x-4 font-mono text-xs">
+
+
+</div>
+</div>
+</header>
+<!-- END: TopHeader -->
+<!-- BEGIN: MainContentStage -->
+<main class="flex-grow flex items-center justify-center px-4 py-12 relative z-10">
+<div class="w-full max-w-4xl grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+<!-- Left Column: Editorial Summary & Context -->
+<div class="lg:col-span-5 flex flex-col justify-center space-y-6">
+<!-- Monospaced Category Indicator -->
+<div class="inline-flex items-center space-x-2">
+<span class="w-1.5 h-1.5 rounded-full bg-[#ea580c]"></span>
+
+</div>
+<h1 class="font-serif text-3xl sm:text-4xl text-[#ffffff] font-normal leading-[1.15] tracking-tight">
+          Editorial synthesis for your high-priority communications.
+        </h1>
+<p class="text-sm text-[#9da0aa] leading-relaxed font-sans">
+          Notifier monitors multi-mailbox streams, automatically distilling relevant signals, actionable tasks, and priority threads into a quiet, paper-grade digest.
+        </p>
+<!-- Editorial Specs Tag Bar -->
+<div class="pt-4 border-t border-[#272930] grid grid-cols-2 gap-4 font-mono text-xs text-[#656873]">
+<div>
+
+
+</div>
+
+</div>
+</div>
+<!-- Right Column: Authentication Card (Refactored from IMAGE_4) -->
+<div class="lg:col-span-7">
+<div class="bg-[#181a20] rounded-lg border border-[#272930] shadow-2xl p-7 sm:p-9 relative overflow-hidden">
+<!-- Subtle Accent Header Strip within card -->
+<div class="flex items-center justify-between pb-6 border-b border-[#272930]/80">
+<div>
+
+<h2 class="font-serif text-2xl sm:text-3xl text-[#ffffff] font-medium tracking-tight mt-1">
+                Log In
+              </h2>
+</div>
+
+</div>
+<!-- Form Area translating IMAGE_4 inputs -->
+<form class="mt-6 space-y-5" onsubmit="event.preventDefault();">
+<!-- Username Input Field -->
+<div class="space-y-1.5">
+<div class="flex items-center justify-between">
+<label class="block font-mono text-xs uppercase tracking-wider text-[#9da0aa]" for="username">
+                  Username <span class="text-[#ea580c]">*</span>
+</label>
+<span class="font-mono text-[10px] text-[#656873]">LDAP / IMAP ID</span>
+</div>
+<div class="relative">
+<input class="w-full bg-[#131418] border border-[#272930] rounded px-3.5 py-2.5 text-sm font-sans text-[#f4f3ee] placeholder-[#656873] focus:outline-none custom-input transition-colors" id="username" name="username" placeholder="e.g. anishkumarverma" required="" type="text">
+</div>
+</div>
+<!-- Password Input Field -->
+<div class="space-y-1.5">
+<div class="flex items-center justify-between">
+<label class="block font-mono text-xs uppercase tracking-wider text-[#9da0aa]" for="password">
+                  Password <span class="text-[#ea580c]">*</span>
+</label>
+<a class="font-mono text-[11px] text-[#9da0aa] hover:text-[#f4f3ee] transition-colors underline decoration-[#272930] underline-offset-4" href="#reset">
+                  Forgot credentials?
+                </a>
+</div>
+<div class="relative">
+<input class="w-full bg-[#131418] border border-[#272930] rounded px-3.5 py-2.5 text-sm font-sans text-[#f4f3ee] placeholder-[#656873] focus:outline-none custom-input transition-colors tracking-widest" id="password" name="password" placeholder="••••••••••••••••" required="" type="password">
+<button class="absolute inset-y-0 right-0 pr-3.5 flex items-center font-mono text-[10px] text-[#656873] hover:text-[#9da0aa] uppercase tracking-wider" data-purpose="password-visibility-toggle" id="togglePassword" onclick="const p = document.getElementById('password'); p.type = p.type === 'password' ? 'text' : 'password'; this.innerText = p.type === 'password' ? 'SHOW' : 'HIDE';" type="button">
+                  SHOW
+                </button>
+</div>
+</div>
+<!-- Session Persistence Checkbox -->
+
+<!-- Primary Action Button (High Contrast White / Paper Cream tactile look) -->
+<div class="pt-2">
+<button class="w-full flex items-center justify-between bg-[#f4f3ee] hover:bg-[#ffffff] text-[#121316] font-sans font-semibold py-3 px-5 rounded transition-all duration-150 shadow-md group" type="submit">
+<span class="tracking-normal text-sm">Sign In to Notifier</span>
+<span class="font-mono text-xs font-normal text-[#656873] group-hover:text-[#121316] flex items-center space-x-1.5 transition-colors">
+<span class="">Enter</span>
+<span class="">↵</span>
+</span>
+</button>
+</div>
+</form>
+<!-- Card Metadata & Verification Footer -->
+<div class="mt-7 pt-5 border-t border-[#272930] flex flex-col sm:flex-row items-center justify-between gap-3 font-mono text-[11px] text-[#656873]">
+<div class="flex items-center space-x-1.5">
+<span class="inline-block w-1 h-1 rounded-full bg-[#d97706]"></span>
+
+</div>
+
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- END: MainContentStage -->
+<!-- BEGIN: BottomFooter -->
+<footer class="w-full border-t border-[#272930] bg-[#121316] py-5 px-6 z-20">
+<div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 font-mono text-xs text-[#656873]">
+<!-- Studio Copyright -->
+<div class="flex items-center space-x-2">
+<span class="font-serif text-[#f4f3ee] font-medium text-sm">Notifier</span>
+
+</div>
+<!-- Navigation Metadata Links -->
+
+</div>
+</footer>
+<!-- END: BottomFooter -->
+<!-- Minor Interactive Enhancements -->
+<script data-purpose="keyboard-shortcuts">
+    // Optional focus enhancement for standard keyboard navigation
+    document.addEventListener('DOMContentLoaded', () => {
+      const userField = document.getElementById('username');
+      if (userField) {
+        userField.focus();
+      }
+    });
+  </script>
+
+
+</body></html>

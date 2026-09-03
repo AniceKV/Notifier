@@ -1,0 +1,33 @@
+# Environments & secrets
+.env
+.env.*
+!.env.example
+.venv/
+env/
+venv/
+.idea/
+.vscode/
+
+# Databases
+*.sqlite3
+db.sqlite3
+
+# Dependencies & build outputs
+node_modules/
+dist/
+build/
+
+# Python bytecode & cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+.coverage
+
+# Email fetch cache
+/Ingestion/fetched_emails/
+
+# Celery
+celerybeat-schedule*
+celerybeat.pid

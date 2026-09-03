@@ -1,0 +1,29 @@
+# Core Web Framework
+Django>=5.0,<6.0
+
+# Cryptography & Security
+cryptography>=43.0.0
+python-dotenv>=1.0.0
+
+# Machine Learning & Ingestion Pipeline
+sentence-transformers>=3.0.0
+torch>=2.0.0
+numpy>=1.26.0
+
+# LLM & AI Generation (BYOK Gemini API)
+google-genai>=1.0.0
+
+# Text Processing & HTML Sanitization
+beautifulsoup4>=4.12.0
+langchain-text-splitters>=0.3.0
+
+# Task Queue & Background Jobs
+celery>=5.4.0
+redis>=5.0.0
+django-celery-beat>=2.6.0
+
+# Production Deployment & Database
+gunicorn>=22.0.0
+whitenoise>=6.6.0
+psycopg2-binary>=2.9.9
+dj-database-url>=2.1.0
