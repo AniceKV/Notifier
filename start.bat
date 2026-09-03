@@ -4,25 +4,16 @@ echo ===================================================
 echo       Starting Notifier Local Full-Stack Suite
 echo ===================================================
 
-:: Ensure Redis is running in WSL as root (prevents sudo password hang)
-echo [1/4] Starting Redis Server in WSL...
-wsl -u root service redis-server start >nul 2>&1
+:: 1. Stop any background Redis daemon in WSL to avoid port conflicts
+echo Preparing Redis Server in WSL...
+wsl -u root bash -c "systemctl stop redis-server 2>/dev/null; pkill -9 redis-server 2>/dev/null"
 
-cd /d "%~dp0djangoproj"
+:: 2. Launch Windows Terminal with 4 tabs for Django, Redis, Celery Worker, and Celery Beat
+echo Launching Windows Terminal with 4 service tabs...
 
-:: Check if virtualenv exists and activate if present
-if exist "..\.venv\Scripts\activate.bat" (
-    call "..\.venv\Scripts\activate.bat"
-)
+wt.exe --title "Django Web Server" -d "%~dp0djangoproj" cmd /k "if exist ..\.venv\Scripts\activate.bat (call ..\.venv\Scripts\activate.bat) & python manage.py runserver" ^; ^
+new-tab --title "Redis Server" cmd /k "wsl redis-server" ^; ^
+new-tab --title "Celery Worker" -d "%~dp0djangoproj" cmd /k "if exist ..\.venv\Scripts\activate.bat (call ..\.venv\Scripts\activate.bat) & timeout /t 2 /nobreak >nul & celery -A djangoproj worker -l info --pool=solo" ^; ^
+new-tab --title "Celery Beat" -d "%~dp0djangoproj" cmd /k "if exist ..\.venv\Scripts\activate.bat (call ..\.venv\Scripts\activate.bat) & timeout /t 2 /nobreak >nul & celery -A djangoproj beat -l info"
 
-:: 2. Start Celery Worker in a new window
-echo [2/4] Starting Celery Worker...
-start "Notifier Celery Worker" cmd /k "cd /d "%~dp0djangoproj" && if exist "..\.venv\Scripts\activate.bat" call "..\.venv\Scripts\activate.bat" && celery -A djangoproj worker -l info --pool=solo"
-
-:: 3. Start Celery Beat Scheduler in a new window
-echo [3/4] Starting Celery Beat Scheduler...
-start "Notifier Celery Beat" cmd /k "cd /d "%~dp0djangoproj" && if exist "..\.venv\Scripts\activate.bat" call "..\.venv\Scripts\activate.bat" && celery -A djangoproj beat -l info"
-
-:: 4. Start Django Development Server
-echo [4/4] Starting Django Web Server on http://127.0.0.1:8000 ...
-python manage.py runserver
+echo All services launched in a single Windows Terminal window!
