@@ -268,56 +268,70 @@
                     </div>
                 </div>
 
-                {% if relevant_matches %}
+                {% if relevant_emails %}
                     <div class="flex flex-col gap-4">
-                        {% for match in relevant_matches %}
+                        {% for email in relevant_emails %}
                             <article class="bg-surface-container-lowest rounded-lg border border-outline-variant/80 p-5 shadow-xs hover:border-outline transition-all">
                                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2.5">
                                     <h2 class="text-base font-semibold text-on-surface">
-                                        <a href="{% url 'email_detail' match.email.id %}" class="hover:text-primary transition-colors inline-flex items-baseline gap-2">
-                                            <span class="text-[11px] font-mono font-medium text-on-surface-variant uppercase">[{{ match.email.platform }}]</span>
-                                            <span class="text-on-surface hover:underline">{{ match.email.subject }}</span>
+                                        <a href="{% url 'email_detail' email.id %}" class="hover:text-primary transition-colors inline-flex items-baseline gap-2">
+                                            <span class="text-[11px] font-mono font-medium text-on-surface-variant uppercase">[{{ email.platform }}]</span>
+                                            <span class="text-on-surface hover:underline">{{ email.subject }}</span>
                                         </a>
                                     </h2>
                                 </div>
 
-                                <!-- Metadata Inset Bar -->
+                                <!-- Metadata Inset Bar with All Matched Topic Tags -->
                                 <div class="bg-surface-container-low rounded border border-outline-variant/60 px-3.5 py-2 mb-3.5 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs text-on-surface-variant font-mono">
                                     <div class="flex items-center gap-1.5">
                                         <span class="text-on-surface-variant/70 uppercase text-[10px] tracking-wider">PLATFORM:</span>
-                                        <span class="text-on-surface font-semibold uppercase">{{ match.email.platform }}</span>
+                                        <span class="text-on-surface font-semibold uppercase">{{ email.platform }}</span>
                                     </div>
                                     <span class="text-outline-variant/60">/</span>
-                                    <div class="flex items-center gap-1.5">
-                                        <span class="text-on-surface-variant/70 uppercase text-[10px] tracking-wider">TOPIC:</span>
-                                        <span class="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase bg-primary/15 text-primary border border-primary/25">{{ match.topic.name }}</span>
+                                    <div class="flex items-center gap-1.5 flex-wrap">
+                                        <span class="text-on-surface-variant/70 uppercase text-[10px] tracking-wider">{% if email.matches.all|length > 1 %}TOPICS:{% else %}TOPIC:{% endif %}</span>
+                                        {% for match in email.matches.all %}
+                                            <span class="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase bg-primary/15 text-primary border border-primary/25">
+                                                {{ match.topic.name }}
+                                            </span>
+                                        {% empty %}
+                                            <span class="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase bg-surface-container text-on-surface-variant">General</span>
+                                        {% endfor %}
                                     </div>
                                     <span class="text-outline-variant/60">/</span>
                                     <div class="flex items-center gap-1.5 min-w-0 max-w-[280px]">
                                         <span class="text-on-surface-variant/70 uppercase text-[10px] tracking-wider shrink-0">SENDER:</span>
-                                        <span class="text-on-surface font-medium truncate" title="{{ match.email.sender }}">{{ match.email.sender }}</span>
+                                        <span class="text-on-surface font-medium truncate" title="{{ email.sender }}">{{ email.sender }}</span>
                                     </div>
                                     <span class="text-outline-variant/60">/</span>
                                     <div class="flex items-center gap-1.5 sm:ml-auto">
                                         <span class="text-on-surface-variant/70 uppercase text-[10px] tracking-wider">DATE:</span>
-                                        <span class="text-on-surface-variant">{{ match.email.received_at|date:"M. j, Y, g:i a"|default:match.email.received_at }}</span>
+                                        <span class="text-on-surface-variant">{{ email.received_at|date:"M. j, Y, g:i a"|default:email.received_at }}</span>
                                     </div>
                                 </div>
 
                                 <!-- AI Summary Box -->
-                                <div class="bg-surface-container-low rounded border border-outline-variant/60 p-4 mb-3.5">
-                                    <div class="text-xs text-on-surface leading-relaxed font-sans">
-                                        {{ match.formatted_summary_html }}
-                                    </div>
+                                <div class="bg-surface-container-low rounded border border-outline-variant/60 p-4 mb-3.5 space-y-3">
+                                    {% for match in email.matches.all %}
+                                        {% if email.matches.all|length > 1 %}
+                                            <div class="text-[10px] font-mono font-bold uppercase text-primary mb-1 flex items-center gap-1.5">
+                                                <span class="w-1.5 h-1.5 rounded-full bg-primary inline-block"></span>
+                                                <span>Topic: {{ match.topic.name }}</span>
+                                            </div>
+                                        {% endif %}
+                                        <div class="text-xs text-on-surface leading-relaxed font-sans">
+                                            {{ match.formatted_summary_html }}
+                                        </div>
+                                    {% endfor %}
                                 </div>
 
                                 <div class="flex items-center justify-between pt-1">
-                                    <a href="{% url 'email_detail' match.email.id %}" class="inline-flex items-center gap-1.5 text-xs font-semibold text-on-surface hover:text-primary transition-colors">
+                                    <a href="{% url 'email_detail' email.id %}" class="inline-flex items-center gap-1.5 text-xs font-semibold text-on-surface hover:text-primary transition-colors">
                                         <span>Read Full Email</span>
                                         <span class="material-symbols-outlined text-[14px]">arrow_forward</span>
                                     </a>
                                     <span class="text-[10px] font-mono text-on-surface-variant/60 uppercase">
-                                        REF // {{ match.email.message_id|default:match.email.id|slice:":12" }}
+                                        REF // {{ email.message_id|default:email.id|slice:":12" }}
                                     </span>
                                 </div>
                             </article>

@@ -36,7 +36,7 @@ flowchart TD
 ### Pipeline Details:
 1. **Stage 1 — Fast Cosine Similarity Filter (Bi-Encoder)**:
    - Splits incoming email bodies using `RecursiveCharacterTextSplitter`.
-   - Generates vector embeddings via `all-MiniLM-L6-v2`.
+   - Generates high-fidelity vector embeddings via `all-mpnet-base-v2` (768-dimensional).
    - Compares vector embeddings against user topics to discard irrelevant mail at near-zero cost.
 2. **Stage 2 — LLM Semantic Verification & Structured Synthesis**:
    - Forwards candidate chunks to Google Gemini (`gemini-2.5-flash`).

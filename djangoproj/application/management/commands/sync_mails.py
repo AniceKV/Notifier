@@ -20,7 +20,7 @@ from application.models import Email, Topic, EmailMatch, UserMailbox
 
 # Import your pipeline modules
 from Ingestion.embedder import TextEmbedder
-from Ingestion.similarity_filter import find_candidate_chunks
+from Ingestion.similarity_filter import find_candidate_chunks, evaluate_chunk_similarities
 from Ingestion.summarizer import evaluate_and_summarize
 from Ingestion.email_parser import parse_email
 from langchain_text_splitters import RecursiveCharacterTextSplitter
@@ -76,10 +76,11 @@ class Command(BaseCommand):
                 self.stdout.write(self.style.WARNING(f"User '{user.username}' has no topics configured. Skipping."))
                 continue
 
-            # Ensure all topics have cached embeddings
+            # Ensure all topics have valid cached embeddings matching current model dimensions
             for topic in topics:
-                if not topic.embedding:
-                    self.stdout.write(f"Generating embedding for topic: {topic.name}")
+                vec = topic.get_embedding_vector()
+                if not vec or len(vec) != 768:
+                    self.stdout.write(f"Generating 768-dim mpnet embedding for topic: {topic.name}")
                     topic_text = f"{topic.name}: {topic.description}"
                     topic.set_embedding_vector(TextEmbedder.embed_text(topic_text))
                     topic.save()
@@ -207,53 +208,109 @@ class Command(BaseCommand):
                 if not chunks:
                     continue
 
-                # Step D: Test against each Topic
+                # Step D: Test against Topics (Ranked Candidate Filtering with Deduplication)
+                self.stdout.write(f"\n" + "-" * 60)
+                self.stdout.write(f"📧 Evaluating Email: \"{email_obj.subject}\"")
+                self.stdout.write(f"   Sender: {email_obj.sender} | Platform: {mailbox.platform} | Chunks: {len(chunks)}")
+                self.stdout.write("-" * 60)
+
+                # 1. First Pass: Compute embedding similarity against all topics
+                topic_candidates = []
                 for topic in topics:
-                    # Stage 1: Fast Cosine Similarity
-                    candidates = find_candidate_chunks(
+                    diag = evaluate_chunk_similarities(
                         topic_vector=topic.get_embedding_vector(),
                         chunks=chunks,
                         threshold=topic.similarity_threshold
                     )
 
+                    candidates = diag["candidates"]
+                    all_scores = diag["all_scores"]
+                    scores_preview = ", ".join(f"{s:.3f}" for s in all_scores[:5])
+                    if len(all_scores) > 5:
+                        scores_preview += f", ... (+{len(all_scores) - 5} more)"
+
                     if not candidates:
-                        continue  # Not similar enough
+                        self.stdout.write(self.style.WARNING(
+                            f"  🎯 Topic: \"{topic.name}\" [Threshold: {topic.similarity_threshold:.3f}]\n"
+                            f"     ❌ Stage 1 [Embedding Cosine]: FAILED\n"
+                            f"        Max Score: {diag['max_score']:.4f} < Threshold: {topic.similarity_threshold:.3f}\n"
+                            f"        All Chunk Scores: [{scores_preview}] (⏱️ {diag['elapsed_ms']}ms)"
+                        ))
+                    else:
+                        self.stdout.write(self.style.SUCCESS(
+                            f"  🎯 Topic: \"{topic.name}\" [Threshold: {topic.similarity_threshold:.3f}]\n"
+                            f"     ✅ Stage 1 [Embedding Cosine]: PASSED\n"
+                            f"        Top Score: {diag['max_score']:.4f} >= Threshold: {topic.similarity_threshold:.3f}\n"
+                            f"        Passing Chunks: {diag['passed_count']}/{diag['total_chunks']} (Scores: [{scores_preview}]) (⏱️ {diag['elapsed_ms']}ms)"
+                        ))
+                        topic_candidates.append({
+                            "topic": topic,
+                            "diag": diag,
+                            "best_chunk": candidates[0]["chunk"],
+                            "best_score": candidates[0]["score"]
+                        })
 
-                    self.stdout.write(f"  -> Candidate match for topic '{topic.name}' ({len(candidates)} chunks)")
+                if not topic_candidates:
+                    continue
 
-                    # Stage 2: LLM Verification & Summarization (Option A)
-                    self.stdout.write("  -> Evaluating relevance & generating summary via LLM...")
-                    best_chunk = candidates[0]["chunk"]
+                # 2. Rank candidate topics by similarity score (highest score first)
+                topic_candidates.sort(key=lambda x: x["best_score"], reverse=True)
+
+                # 3. Stage 2: Evaluate with LLM on all candidate topics
+                for candidate_info in topic_candidates:
+                    cand_topic = candidate_info["topic"]
+                    best_chunk = candidate_info["best_chunk"]
+                    best_score = candidate_info["best_score"]
+
+                    self.stdout.write(f"     🤖 Stage 2 [Gemini Relevance]: Evaluating candidate '{cand_topic.name}' (Score: {best_score:.4f})...")
                     user_gemini_key = user.profile.get_gemini_api_key() if hasattr(user, 'profile') else ""
-                    is_relevant, summary_output = evaluate_and_summarize(
-                        topic_name=topic.name,
-                        topic_desc=topic.description,
+
+                    is_relevant, summary_output, llm_diag = evaluate_and_summarize(
+                        topic_name=cand_topic.name,
+                        topic_desc=cand_topic.description,
                         email_subject=email_obj.subject,
                         email_body=best_chunk,
-                        api_key=user_gemini_key
+                        api_key=user_gemini_key,
+                        return_diagnostics=True
                     )
 
                     if not is_relevant:
-                        self.stdout.write(self.style.WARNING("  -> Filtered out by LLM (Not relevant)."))
+                        self.stdout.write(self.style.WARNING(
+                            f"     ❌ Stage 2 [Gemini Relevance]: REJECTED by AI for '{cand_topic.name}'\n"
+                            f"        Reason: {llm_diag.get('reason', 'Deemed not genuinely relevant')}\n"
+                            f"        Status: {llm_diag.get('status')} (⏱️ {llm_diag.get('elapsed_ms')}ms)"
+                        ))
                         continue
 
-                    self.stdout.write(self.style.SUCCESS("  -> VERIFIED RELEVANT BY LLM!"))
+                    self.stdout.write(self.style.SUCCESS(
+                        f"     🎉 Stage 2 [Gemini Relevance]: VERIFIED RELEVANT to '{cand_topic.name}'! (⏱️ {llm_diag.get('elapsed_ms')}ms)\n"
+                        f"        Top Score: {best_score:.4f}"
+                    ))
 
-                    # Save match to database
-                    match_obj = EmailMatch.objects.create(
+                    # Save match to database (1 match record per (email, topic) pair)
+                    match_obj, created = EmailMatch.objects.get_or_create(
                         email=email_obj,
-                        topic=topic,
-                        user=user,
-                        candidate_score=candidates[0]["score"],
-                        matched_chunk=best_chunk,
-                        summary=summary_output,
-                        match_reason=f"Verified by AI as relevant to '{topic.name}'",
+                        topic=cand_topic,
+                        defaults={
+                            "user": user,
+                            "candidate_score": best_score,
+                            "matched_chunk": best_chunk,
+                            "summary": summary_output,
+                            "match_reason": f"Verified by AI as relevant to '{cand_topic.name}' (Cosine: {best_score:.4f})",
+                        }
                     )
+                    if created:
+                        self.stdout.write(f"        💾 Saved EmailMatch #{match_obj.id}")
+                    else:
+                        match_obj.summary = summary_output
+                        match_obj.candidate_score = best_score
+                        match_obj.save()
+                        self.stdout.write(f"        💾 Updated EmailMatch #{match_obj.id}")
 
                     # Send instant mobile push notification (ntfy.sh / Telegram)
                     from application.telegram_notifier import send_mobile_alert
                     sent = send_mobile_alert(
-                        topic_name=topic.name,
+                        topic_name=cand_topic.name,
                         sender=email_obj.sender,
                         subject=email_obj.subject,
                         summary=summary_output,
@@ -261,7 +318,7 @@ class Command(BaseCommand):
                         received_at=email_obj.received_at,
                     )
                     if sent:
-                        self.stdout.write(self.style.SUCCESS("  -> Mobile push notification sent!"))
+                        self.stdout.write(self.style.SUCCESS("        📲 Mobile push notification sent!"))
 
             mail.logout()
 

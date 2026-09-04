@@ -26,7 +26,7 @@ class InboxView(LoginRequiredMixin, View):
 
         # Base querysets
         all_emails = Email.objects.filter(owner=request.user).order_by('-received_at')
-        relevant_matches = EmailMatch.objects.filter(user=request.user).select_related('email', 'topic').order_by('-created_at')
+        relevant_emails = Email.objects.filter(owner=request.user, matches__isnull=False).distinct().prefetch_related('matches__topic').order_by('-received_at')
 
         # Collect available filter choices for the user
         user_topics = request.user.topics.all().order_by('name')
@@ -39,30 +39,30 @@ class InboxView(LoginRequiredMixin, View):
         if selected_topic:
             try:
                 topic_id = int(selected_topic)
-                relevant_matches = relevant_matches.filter(topic_id=topic_id)
+                relevant_emails = relevant_emails.filter(matches__topic_id=topic_id).distinct()
                 all_emails = all_emails.filter(matches__topic_id=topic_id).distinct()
             except ValueError:
-                relevant_matches = relevant_matches.filter(topic__name__iexact=selected_topic)
+                relevant_emails = relevant_emails.filter(matches__topic__name__iexact=selected_topic).distinct()
                 all_emails = all_emails.filter(matches__topic__name__iexact=selected_topic).distinct()
 
         # 2. Filter by Platform
         if selected_platform:
-            relevant_matches = relevant_matches.filter(email__platform__iexact=selected_platform)
+            relevant_emails = relevant_emails.filter(platform__iexact=selected_platform)
             all_emails = all_emails.filter(platform__iexact=selected_platform)
 
         # 3. Filter by Time Window
         now = timezone.now()
         if selected_time in ('24h', 'today'):
             time_threshold = now - timedelta(days=1)
-            relevant_matches = relevant_matches.filter(email__received_at__gte=time_threshold)
+            relevant_emails = relevant_emails.filter(received_at__gte=time_threshold)
             all_emails = all_emails.filter(received_at__gte=time_threshold)
         elif selected_time == '7d':
             time_threshold = now - timedelta(days=7)
-            relevant_matches = relevant_matches.filter(email__received_at__gte=time_threshold)
+            relevant_emails = relevant_emails.filter(received_at__gte=time_threshold)
             all_emails = all_emails.filter(received_at__gte=time_threshold)
         elif selected_time == '30d':
             time_threshold = now - timedelta(days=30)
-            relevant_matches = relevant_matches.filter(email__received_at__gte=time_threshold)
+            relevant_emails = relevant_emails.filter(received_at__gte=time_threshold)
             all_emails = all_emails.filter(received_at__gte=time_threshold)
 
         active_filters_count = sum(1 for val in [selected_topic, selected_platform, selected_time] if val)
@@ -70,8 +70,9 @@ class InboxView(LoginRequiredMixin, View):
         context = {
             'tab': current_tab,
             'all_emails': all_emails,
-            'relevant_matches': relevant_matches,
-            'relevant_count': relevant_matches.count(),
+            'relevant_emails': relevant_emails,
+            'relevant_matches': relevant_emails,
+            'relevant_count': relevant_emails.count(),
             'all_count': all_emails.count(),
             'user_topics': user_topics,
             'available_platforms': available_platforms,
