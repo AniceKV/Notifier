@@ -4,12 +4,12 @@
 [![Django](https://img.shields.io/badge/Django-5.2+-092E20?style=flat-square&logo=django&logoColor=white)](https://www.djangoproject.com/)
 [![Celery](https://img.shields.io/badge/Celery-5.4+-37814A?style=flat-square&logo=celery&logoColor=white)](https://docs.celeryq.dev/)
 [![Redis](https://img.shields.io/badge/Redis-Queue-DC382D?style=flat-square&logo=redis&logoColor=white)](https://redis.io/)
-[![Google Gemini](https://img.shields.io/badge/Google%20Gemini-BYOK-8E75B2?style=flat-square&logo=google&logoColor=white)](https://aistudio.google.com/)
+[![LM Studio](https://img.shields.io/badge/LM%20Studio-OpenAI%20Compatible-00ADD8?style=flat-square&logo=openai&logoColor=white)](https://lmstudio.ai/)
 [![Render](https://img.shields.io/badge/Render-Deploy%20Ready-46E3B7?style=flat-square&logo=render&logoColor=black)](https://render.com/)
 
 > **AI-Powered Inbox Intelligence, Background Sync & Multi-Stage Email Filtering Pipeline**
 
-Notifier is an intelligent email ingestion and relevance engine that continuously monitors incoming emails across multiple IMAP providers (Gmail, Outlook, Yahoo, iCloud, Custom IMAP), filters high-signal messages matching user-defined interest topics, generates structured AI summaries using Google Gemini, and delivers instant push notifications directly to your mobile device.
+Notifier is an intelligent email ingestion and relevance engine that continuously monitors incoming emails across multiple IMAP providers (Gmail, Outlook, Yahoo, iCloud, Custom IMAP), filters high-signal messages matching user-defined interest topics, generates structured AI summaries using local **LM Studio** models (e.g. `qwen/qwen3-1.7b` or any OpenAI-compatible LLM), and delivers instant push notifications directly to your mobile device.
 
 ---
 
@@ -25,7 +25,7 @@ flowchart TD
     Worker -->|IMAP SSL| Mailbox[User Mailboxes - Gmail, Outlook, Yahoo, iCloud]
     Mailbox -->|Raw Email Stream| Chunker[HTML Cleaning & Text Splitter]
     Chunker --> Stage1[Stage 1: Bi-Encoder Embeddings & Cosine Filter]
-    Stage1 -->|Cosine Similarity >= Threshold| Stage2[Stage 2: Gemini LLM Verification & Synthesis]
+    Stage1 -->|Cosine Similarity >= Threshold| Stage2[Stage 2: LM Studio / OpenAI-Compatible LLM Verification & Synthesis]
     Stage1 -->|Low Similarity| Discard[Discarded]
     Stage2 -->|Filtered Out by LLM| Discard
     Stage2 -->|Verified Relevant| SaveMatch[Store EmailMatch in Database]
@@ -38,8 +38,8 @@ flowchart TD
    - Splits incoming email bodies using `RecursiveCharacterTextSplitter`.
    - Generates high-fidelity vector embeddings via `all-mpnet-base-v2` (768-dimensional).
    - Compares vector embeddings against user topics to discard irrelevant mail at near-zero cost.
-2. **Stage 2 — LLM Semantic Verification & Structured Synthesis**:
-   - Forwards candidate chunks to Google Gemini (`gemini-2.5-flash-lite`).
+2. **Stage 2 — LM Studio LLM Semantic Verification & Structured Synthesis**:
+   - Forwards candidate chunks to LM Studio (`qwen/qwen3-1.7b` via `http://127.0.0.1:1234/v1`).
    - Verifies whether the email genuinely matches the topic context.
    - Extracts structured key takeaways and action items.
 3. **Stage 3 — Real-Time Mobile Dispatch**:
@@ -52,7 +52,7 @@ flowchart TD
 - **Asynchronous Task Queue**: Background processing powered by Celery and Redis to prevent blocking web requests.
 - **Automated 5-Minute Polling**: Celery Beat scheduler continuously synchronizes connected mailboxes without manual intervention.
 - **Instant Mobile Push Notifications**: Zero-setup alerts on your phone lock screen via `ntfy.sh` or Telegram with platform tags (`[Gmail]`, `[Outlook]`, etc.).
-- **Bring Your Own Key (BYOK)**: User-provided Google Gemini API keys stored with AES/Fernet encryption.
+- **LM Studio & Local AI Integration**: Full OpenAI-compatible REST API support for local inference (e.g. Qwen 3, Llama 3, Mistral) with zero cloud leaks and zero API costs.
 - **Platform Agnostic IMAP**: Connect any email provider (Gmail, Outlook, Yahoo, Apple iCloud, or custom corporate IMAP servers).
 - **Sandboxed Security**: Sandboxed rendering for HTML emails preventing script execution or style leakage.
 - **Production Ready**: Pre-configured with Gunicorn, WhiteNoise static files serving, PostgreSQL database support, and Render Blueprints.
@@ -61,9 +61,9 @@ flowchart TD
 
 ## Security & Privacy Architecture
 
-- **BYOK Gemini Architecture**: No static API keys stored in global configuration. Users configure their own Google AI Studio API key via the Profile dashboard.
+- **Local LLM Execution**: With LM Studio, all email content stays 100% on your local machine.
 - **Encrypted Storage at Rest**:
-  - IMAP passwords and Gemini API keys are encrypted at rest using `Fernet` (AES-128-CBC + HMAC-SHA256) with a 256-bit key derived via SHA-256.
+  - IMAP passwords and custom AI API keys are encrypted at rest using `Fernet` (AES-128-CBC + HMAC-SHA256) with a 256-bit key derived via SHA-256.
   - Plaintext credentials exist strictly in memory during active IMAP connections and AI calls.
 - **XSS & Isolation**:
   - HTML emails are rendered in an isolated `<iframe>` with strict sandbox restrictions (`allow-same-origin allow-popups`).
@@ -94,7 +94,11 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-#### 2. Configure Environment Variables
+#### 2. Start LM Studio Server
+- Open **LM Studio** and load your desired model (e.g. `qwen/qwen3-1.7b`).
+- Start the Local Server on port `1234` (OpenAI-compatible endpoint `http://127.0.0.1:1234/v1`).
+
+#### 3. Configure Environment Variables
 Copy `.env.example` to `.env`:
 ```bash
 cp .env.example .env
@@ -107,6 +111,10 @@ DJANGO_DEBUG="True"
 ALLOWED_HOSTS="127.0.0.1,localhost"
 TIME_ZONE="Asia/Kolkata"
 
+# Local AI Engine (LM Studio)
+LM_STUDIO_URL="http://127.0.0.1:1234/v1"
+LM_STUDIO_MODEL="qwen/qwen3-1.7b"
+
 # Mobile push notification topic (subscribe to this in the free ntfy mobile app)
 NTFY_TOPIC="Notifier_for_anish"
 
@@ -115,14 +123,14 @@ CELERY_BROKER_URL="redis://localhost:6379/0"
 CELERY_RESULT_BACKEND="redis://localhost:6379/0"
 ```
 
-#### 3. Apply Database Migrations & Create Admin
+#### 4. Apply Database Migrations & Create Admin
 ```bash
 cd djangoproj
 python manage.py migrate
 python manage.py createsuperuser
 ```
 
-#### 4. Launch the Server Suite
+#### 5. Launch the Server Suite
 - **Option A (1-Click Launch on Windows)**:
   Run `start.bat` from the root directory. It automatically starts Redis in WSL, launches Celery Worker, Celery Beat, and the Django web server in coordinated windows.
 - **Option B (Manual Launch)**:
@@ -134,16 +142,16 @@ python manage.py createsuperuser
 ---
 
 ### Part 2: Web App User Onboarding
-Once the server is running, any new user completes these 4 steps in the browser to start receiving AI summaries:
+Once the server is running, complete these steps in the browser to start receiving AI summaries:
 
 #### Step 1: Create an Account & Sign In
 - Navigate to `http://127.0.0.1:8000/` (or your live deployed URL).
 - Register a new user account and log in.
 
-#### Step 2: Add Google Gemini API Key (BYOK)
+#### Step 2: Configure LM Studio / Local AI
 - Go to **Profile & Settings** (`/profile/`).
-- Under **Gemini AI Configuration**, paste your free API key from [Google AI Studio](https://aistudio.google.com/app/apikey).
-- Keys are encrypted with AES/Fernet encryption upon saving.
+- Under **LM Studio & Local AI**, confirm your endpoint URL (`http://127.0.0.1:1234/v1`) and target model (`qwen/qwen3-1.7b`).
+- Click **⚡ Test Connection** to verify live connectivity.
 
 #### Step 3: Connect an Email Mailbox
 - In **Connected Mailboxes**, click **Connect Mailbox**:
@@ -153,8 +161,8 @@ Once the server is running, any new user completes these 4 steps in the browser 
 
 #### Step 4: Define Interest Topics to Track
 - Under **AI Topic Classifiers**, click **Add Topic**:
-  - **Topic Name**: (e.g. `Google Summer of Code`, `Job Offers`, `Research Grants`)
-  - **Description**: What you are looking for (e.g. `Emails regarding GSoC proposals, mentor reviews, and acceptance announcements`).
+  - **Topic Name**: (e.g. `Machine Learning Research`, `Job Offers`, `Internship Updates`)
+  - **Description**: What you are looking for (e.g. `Paper acceptances, NeurIPS/ICLR updates, PyTorch releases`).
   - **Similarity Threshold**: Default `0.35` / `0.50`.
 
 #### Step 5: (Optional) Subscribe to Mobile Notifications
@@ -168,24 +176,14 @@ Once the server is running, any new user completes these 4 steps in the browser 
 
 Notifier includes a ready-to-use `render.yaml` Blueprint specification for 1-click cloud deployment.
 
-### Steps:
-1. Push your repository to GitHub.
-2. Log in to [Render Dashboard](https://dashboard.render.com/) and click **New + > Blueprint**.
-3. Select your **Notifier** repository.
-4. Render will automatically provision:
-   - **Web Service** (`notifier-web`): Gunicorn + WhiteNoise running Django.
-   - **Background Worker** (`notifier-worker`): Combined Celery worker and Beat scheduler.
-   - **PostgreSQL Database** (`notifier-db`): Persistent database storage.
-   - **Redis Instance** (`notifier-redis`): Queue broker for Celery.
-5. Set your `SECRET_KEY` and `NTFY_TOPIC` in the Render environment variables dashboard.
-
 ---
 
 ## Roadmap
 
 - [x] Multi-stage email ingestion and semantic filtering pipeline.
-- [x] BYOK Google Gemini API key encryption at rest.
-- [x] Platform-agnostic IMAP credentials management.
+- [x] LM Studio and OpenAI-compatible local AI integration.
+- [x] Live model connectivity testing and discovery.
+- [x] Platform-agnostic IMAP credentials management with AES-256 encryption.
 - [x] Background asynchronous email synchronization via Celery + Redis worker queue.
 - [x] Automated 5-minute scheduled polling via Celery Beat.
 - [x] Instant mobile push notifications via ntfy.sh and Telegram.
@@ -193,3 +191,4 @@ Notifier includes a ready-to-use `render.yaml` Blueprint specification for 1-cli
 - [x] Production deployment configuration for Render (Gunicorn, WhiteNoise, PostgreSQL).
 - [ ] Email categorization rules and webhook actions.
 - [ ] Multi-account digest summary generation.
+

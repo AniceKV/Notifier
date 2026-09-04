@@ -27,13 +27,48 @@ class Topic(models.Model):
 
 class UserProfile(models.Model):
     """
-    User settings including Bring-Your-Own-Key (BYOK) for Gemini API.
-    API keys are encrypted at rest using SHA-256 derived AES/Fernet encryption.
+    User settings including LM Studio / OpenAI-compatible local and remote LLM configuration.
+    Sensitive credentials are encrypted at rest using SHA-256 derived AES/Fernet encryption.
     """
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
+    lm_studio_url = models.CharField(max_length=255, default="http://127.0.0.1:1234/v1", blank=True)
+    lm_studio_model = models.CharField(max_length=150, default="qwen/qwen3-1.7b", blank=True)
+    lm_studio_api_key = models.CharField(max_length=500, blank=True, null=True)
     gemini_api_key = models.CharField(max_length=500, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    def get_lm_studio_url(self) -> str:
+        return (self.lm_studio_url or "http://127.0.0.1:1234/v1").strip()
+
+    def get_lm_studio_model(self) -> str:
+        return (self.lm_studio_model or "qwen/qwen3-1.7b").strip()
+
+    def set_lm_studio_api_key(self, raw_key: str):
+        from application.crypto import encrypt_credential
+        if raw_key and raw_key.strip():
+            self.lm_studio_api_key = encrypt_credential(raw_key.strip())
+        else:
+            self.lm_studio_api_key = None
+
+    def get_lm_studio_api_key(self) -> str:
+        from application.crypto import decrypt_credential
+        if not self.lm_studio_api_key:
+            return "lm-studio"
+        return decrypt_credential(self.lm_studio_api_key)
+
+    @property
+    def has_lm_studio_custom_key(self) -> bool:
+        return bool(self.lm_studio_api_key)
+
+    @property
+    def masked_lm_studio_api_key(self) -> str:
+        key = self.get_lm_studio_api_key()
+        if not key or key == "lm-studio":
+            return "lm-studio (Default Local Key)"
+        if len(key) <= 8:
+            return "••••••••"
+        return f"••••••••••••{key[-4:]}"
 
     def set_gemini_api_key(self, raw_key: str):
         from application.crypto import encrypt_credential

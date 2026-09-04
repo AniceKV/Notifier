@@ -1,6 +1,14 @@
 import os
+import sys
+from pathlib import Path
 from celery import Celery
 from celery.schedules import crontab
+
+# Ensure project root is in sys.path
+_BASE_DIR = Path(__file__).resolve().parent.parent
+_ROOT_DIR = _BASE_DIR.parent
+if str(_ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(_ROOT_DIR))
 
 # Set the default Django settings module for the 'celery' program.
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'djangoproj.settings')

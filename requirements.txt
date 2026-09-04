@@ -10,8 +10,8 @@ sentence-transformers>=3.0.0
 torch>=2.0.0
 numpy>=1.26.0
 
-# LLM & AI Generation (BYOK Gemini API)
-google-genai>=1.0.0
+# LLM & AI Generation (LM Studio / OpenAI-Compatible)
+openai>=1.0.0
 
 # Text Processing & HTML Sanitization
 beautifulsoup4>=4.12.0

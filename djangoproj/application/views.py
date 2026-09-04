@@ -9,8 +9,9 @@ from datetime import timedelta
 from django.utils import timezone
 
 from application.models import Topic, Email, EmailMatch, UserMailbox, UserProfile
-from application.forms import TopicForm, UserProfileForm, UserMailboxForm, GeminiApiKeyForm
+from application.forms import TopicForm, UserProfileForm, UserMailboxForm, LMStudioConfigForm, GeminiApiKeyForm
 from application.tasks import sync_mailbox_task
+from Ingestion.summarizer import test_lm_studio_connection
 
 
 class InboxView(LoginRequiredMixin, View):
@@ -146,12 +147,15 @@ class EmailContentView(LoginRequiredMixin, View):
 
 class ProfileView(LoginRequiredMixin, View):
     """
-    Unified profile: edit user info, configure BYOK Gemini API key, connect multiple email mailboxes, and manage topics.
+    Unified profile: edit user info, configure LM Studio / OpenAI-compatible AI, connect multiple email mailboxes, and manage topics.
     """
     def get(self, request):
         profile, _ = UserProfile.objects.get_or_create(user=request.user)
         user_form = UserProfileForm(instance=request.user)
-        api_key_form = GeminiApiKeyForm()
+        lm_config_form = LMStudioConfigForm(initial={
+            'lm_studio_url': profile.get_lm_studio_url(),
+            'lm_studio_model': profile.get_lm_studio_model(),
+        })
         mailbox_form = UserMailboxForm()
         mailboxes = request.user.mailboxes.all()
         topic_form = TopicForm()
@@ -160,7 +164,7 @@ class ProfileView(LoginRequiredMixin, View):
         return render(request, 'profile.html', {
             'profile': profile,
             'user_form': user_form,
-            'api_key_form': api_key_form,
+            'lm_config_form': lm_config_form,
             'mailbox_form': mailbox_form,
             'mailboxes': mailboxes,
             'topic_form': topic_form,
@@ -168,6 +172,8 @@ class ProfileView(LoginRequiredMixin, View):
         })
 
     def post(self, request):
+        profile, _ = UserProfile.objects.get_or_create(user=request.user)
+
         # 1. Update personal info
         if 'update_profile' in request.POST:
             user_form = UserProfileForm(request.POST, instance=request.user)
@@ -176,26 +182,54 @@ class ProfileView(LoginRequiredMixin, View):
                 messages.success(request, "Personal info updated successfully.")
                 return redirect('profile')
 
-        # 2. BYOK: Save or update Gemini API key
-        elif 'save_api_key' in request.POST:
-            api_key_form = GeminiApiKeyForm(request.POST)
-            if api_key_form.is_valid():
-                raw_key = api_key_form.cleaned_data['gemini_api_key']
-                profile, _ = UserProfile.objects.get_or_create(user=request.user)
-                profile.set_gemini_api_key(raw_key)
+        # 2. Save or update LM Studio / OpenAI-compatible settings
+        elif 'save_lm_config' in request.POST:
+            lm_config_form = LMStudioConfigForm(request.POST)
+            if lm_config_form.is_valid():
+                url = lm_config_form.cleaned_data['lm_studio_url'].strip()
+                model = lm_config_form.cleaned_data['lm_studio_model'].strip()
+                api_key = lm_config_form.cleaned_data.get('lm_studio_api_key', '').strip()
+
+                profile.lm_studio_url = url
+                profile.lm_studio_model = model
+                if api_key:
+                    profile.set_lm_studio_api_key(api_key)
                 profile.save()
-                messages.success(request, "Google Gemini API key saved and encrypted successfully.")
+                messages.success(request, f"LM Studio configuration saved successfully! (Endpoint: {url}, Model: {model})")
                 return redirect('profile')
 
-        # 3. BYOK: Remove Gemini API key
-        elif 'delete_api_key' in request.POST:
-            profile, _ = UserProfile.objects.get_or_create(user=request.user)
-            profile.set_gemini_api_key(None)
-            profile.save()
-            messages.success(request, "Gemini API key removed.")
+        # 3. Test LM Studio Connection
+        elif 'test_lm_connection' in request.POST:
+            url = request.POST.get('lm_studio_url', '').strip() or profile.get_lm_studio_url()
+            model = request.POST.get('lm_studio_model', '').strip() or profile.get_lm_studio_model()
+            api_key = request.POST.get('lm_studio_api_key', '').strip() or profile.get_lm_studio_api_key()
+
+            diag = test_lm_studio_connection(api_url=url, api_key=api_key, model=model)
+            if diag.get("success"):
+                models_str = ", ".join(diag.get("models", [])) or "None returned"
+                messages.success(
+                    request,
+                    f"⚡ Connection Successful ({diag.get('latency_ms')}ms)! "
+                    f"Reachable at {diag.get('base_url')}. Loaded models: [{models_str}]"
+                )
+            else:
+                messages.error(
+                    request,
+                    f"❌ Connection Failed: {diag.get('message')}. "
+                    f"Ensure LM Studio is running on {url} with the local server started."
+                )
             return redirect('profile')
 
-        # 4. Add an IMAP mailbox
+        # 4. Reset LM Studio settings to local defaults
+        elif 'reset_lm_config' in request.POST:
+            profile.lm_studio_url = "http://127.0.0.1:1234/v1"
+            profile.lm_studio_model = "qwen/qwen3-1.7b"
+            profile.set_lm_studio_api_key(None)
+            profile.save()
+            messages.success(request, "LM Studio configuration reset to local defaults (http://127.0.0.1:1234/v1, qwen/qwen3-1.7b).")
+            return redirect('profile')
+
+        # 5. Add an IMAP mailbox
         elif 'save_mailbox' in request.POST:
             mailbox_form = UserMailboxForm(request.POST)
             if mailbox_form.is_valid():
@@ -205,7 +239,7 @@ class ProfileView(LoginRequiredMixin, View):
                 messages.success(request, f"Added {mailbox.platform} mailbox ({mailbox.email_address}) successfully.")
                 return redirect('profile')
 
-        # 5. Disconnect / delete a mailbox
+        # 6. Disconnect / delete a mailbox
         elif 'delete_mailbox' in request.POST:
             mailbox_id = request.POST.get('mailbox_id')
             deleted, _ = request.user.mailboxes.filter(id=mailbox_id).delete()

@@ -49,13 +49,46 @@ class UserMailboxForm(forms.ModelForm):
         }
 
 
+class LMStudioConfigForm(forms.Form):
+    lm_studio_url = forms.CharField(
+        label="Endpoint URL",
+        initial="http://127.0.0.1:1234/v1",
+        widget=forms.TextInput(attrs={
+            'class': 'w-full h-9 px-3 bg-surface-container-lowest text-on-surface text-sm rounded border border-outline-variant focus:outline-none focus:ring-2 focus:ring-primary font-mono',
+            'placeholder': 'http://127.0.0.1:1234/v1',
+        }),
+        required=True,
+        help_text="The base URL of your LM Studio server or any OpenAI-compatible API endpoint (e.g. http://127.0.0.1:1234/v1).",
+    )
+    lm_studio_model = forms.CharField(
+        label="Model Identifier",
+        initial="qwen/qwen3-1.7b",
+        widget=forms.TextInput(attrs={
+            'class': 'w-full h-9 px-3 bg-surface-container-lowest text-on-surface text-sm rounded border border-outline-variant focus:outline-none focus:ring-2 focus:ring-primary font-mono',
+            'placeholder': 'qwen/qwen3-1.7b',
+        }),
+        required=True,
+        help_text="Loaded model identifier in LM Studio (e.g. qwen/qwen3-1.7b).",
+    )
+    lm_studio_api_key = forms.CharField(
+        label="API Key (Optional)",
+        required=False,
+        widget=forms.PasswordInput(render_value=False, attrs={
+            'class': 'w-full h-9 px-3 bg-surface-container-lowest text-on-surface text-sm rounded border border-outline-variant focus:outline-none focus:ring-2 focus:ring-primary font-mono',
+            'placeholder': 'lm-studio (Leave blank for default local)',
+            'autocomplete': 'off',
+        }),
+        help_text="Optional for local LM Studio. Encrypted at rest using SHA-256 derived AES encryption.",
+    )
+
+
 class GeminiApiKeyForm(forms.Form):
     gemini_api_key = forms.CharField(
         widget=forms.PasswordInput(render_value=False, attrs={
             'class': 'w-full h-9 px-3 bg-surface-container-lowest text-on-surface text-sm rounded border border-outline-variant focus:outline-none focus:ring-2 focus:ring-primary font-mono',
-            'placeholder': 'AIzaSy... (Paste your Google Gemini API Key)',
+            'placeholder': 'AIzaSy... (Legacy Gemini Key)',
             'autocomplete': 'off',
         }),
-        required=True,
+        required=False,
         help_text="Your key is encrypted with SHA-256 derived AES encryption and stored securely.",
     )

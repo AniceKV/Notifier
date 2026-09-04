@@ -262,28 +262,33 @@ class Command(BaseCommand):
                     best_chunk = candidate_info["best_chunk"]
                     best_score = candidate_info["best_score"]
 
-                    self.stdout.write(f"     🤖 Stage 2 [Gemini Relevance]: Evaluating candidate '{cand_topic.name}' (Score: {best_score:.4f})...")
-                    user_gemini_key = user.profile.get_gemini_api_key() if hasattr(user, 'profile') else ""
+                    user_lm_url = user.profile.get_lm_studio_url() if hasattr(user, 'profile') else None
+                    user_lm_model = user.profile.get_lm_studio_model() if hasattr(user, 'profile') else None
+                    user_lm_key = user.profile.get_lm_studio_api_key() if hasattr(user, 'profile') else None
+
+                    self.stdout.write(f"     🤖 Stage 2 [LM Studio: {user_lm_model}]: Evaluating candidate '{cand_topic.name}' (Score: {best_score:.4f})...")
 
                     is_relevant, summary_output, llm_diag = evaluate_and_summarize(
                         topic_name=cand_topic.name,
                         topic_desc=cand_topic.description,
                         email_subject=email_obj.subject,
                         email_body=best_chunk,
-                        api_key=user_gemini_key,
+                        api_url=user_lm_url,
+                        model=user_lm_model,
+                        api_key=user_lm_key,
                         return_diagnostics=True
                     )
 
                     if not is_relevant:
                         self.stdout.write(self.style.WARNING(
-                            f"     ❌ Stage 2 [Gemini Relevance]: REJECTED by AI for '{cand_topic.name}'\n"
+                            f"     ❌ Stage 2 [LM Studio: {user_lm_model}]: REJECTED by AI for '{cand_topic.name}'\n"
                             f"        Reason: {llm_diag.get('reason', 'Deemed not genuinely relevant')}\n"
                             f"        Status: {llm_diag.get('status')} (⏱️ {llm_diag.get('elapsed_ms')}ms)"
                         ))
                         continue
 
                     self.stdout.write(self.style.SUCCESS(
-                        f"     🎉 Stage 2 [Gemini Relevance]: VERIFIED RELEVANT to '{cand_topic.name}'! (⏱️ {llm_diag.get('elapsed_ms')}ms)\n"
+                        f"     🎉 Stage 2 [LM Studio: {user_lm_model}]: VERIFIED RELEVANT to '{cand_topic.name}'! (⏱️ {llm_diag.get('elapsed_ms')}ms)\n"
                         f"        Top Score: {best_score:.4f}"
                     ))
 

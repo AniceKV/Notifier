@@ -14,11 +14,16 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv
 
+import sys
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Load environment variables from repository root .env
 ROOT_DIR = BASE_DIR.parent
+if str(ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIR))
+
 load_dotenv(ROOT_DIR / ".env")
 
 # SECURITY WARNING: keep the secret key used in production secret!
