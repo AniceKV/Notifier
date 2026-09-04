@@ -139,11 +139,13 @@ class Command(BaseCommand):
                 continue
 
             email_ids = messages[0].split()
-            self.stdout.write(f"Found {len(email_ids)} email(s) on {mailbox.platform}. Processing...")
+            self.stdout.write(f"Found {len(email_ids)} email(s) on {mailbox.platform}. Fetching...")
 
+            # 1. Fetch & parse emails to sort them chronologically (oldest -> newest)
+            fetched_batch = []
             for e_id in email_ids:
-                status, data = mail.fetch(e_id, "(BODY.PEEK[])")
-                if status != "OK":
+                fetch_status, data = mail.fetch(e_id, "(BODY.PEEK[])")
+                if fetch_status != "OK" or not data or not data[0]:
                     continue
 
                 raw_bytes = data[0][1]
@@ -153,11 +155,34 @@ class Command(BaseCommand):
                 msg = BytesParser(policy=policy.default).parsebytes(raw_bytes)
                 message_id = msg.get("Message-ID") or f"{mailbox.platform.lower()}-{e_id.decode()}"
 
-                # Step A: Deduplication
+                # Early Deduplication
                 if Email.objects.filter(message_id=message_id).exists():
-                    safe_subj = parsed['subject'] or "No Subject"
+                    safe_subj = parsed.get('subject') or "No Subject"
                     self.stdout.write(f"Skipping already stored email: {safe_subj}")
                     continue
+
+                fetched_batch.append({
+                    "e_id": e_id,
+                    "message_id": message_id,
+                    "parsed": parsed,
+                })
+
+            # Sort chronological (oldest -> newest) so notifications appear in order of arrival
+            from django.utils import timezone
+            def get_sort_key(item):
+                dt = item["parsed"].get("received_at")
+                if dt is None:
+                    return timezone.now()
+                if timezone.is_naive(dt):
+                    return timezone.make_aware(dt)
+                return dt
+
+            fetched_batch.sort(key=get_sort_key)
+            self.stdout.write(f"Processing {len(fetched_batch)} new email(s) in chronological order...")
+
+            for item in fetched_batch:
+                parsed = item["parsed"]
+                message_id = item["message_id"]
 
                 # Step B: Store in Email table with platform identifier
                 email_obj = Email.objects.create(
@@ -233,10 +258,10 @@ class Command(BaseCommand):
                         subject=email_obj.subject,
                         summary=summary_output,
                         platform=email_obj.platform,
+                        received_at=email_obj.received_at,
                     )
                     if sent:
                         self.stdout.write(self.style.SUCCESS("  -> Mobile push notification sent!"))
-
 
             mail.logout()
 

@@ -7,7 +7,29 @@ import urllib.parse
 
 logger = logging.getLogger(__name__)
 
-def send_ntfy_alert(topic_name: str, sender: str, subject: str, summary: str, platform: str = "Email") -> bool:
+
+def _format_timestamp(received_at) -> str:
+    """Helper to format datetime nicely into readable local time string."""
+    if not received_at:
+        return ""
+    try:
+        # If it's a datetime object
+        if hasattr(received_at, "strftime"):
+            try:
+                from django.utils import timezone
+                if timezone.is_aware(received_at):
+                    local_dt = timezone.localtime(received_at)
+                else:
+                    local_dt = received_at
+                return local_dt.strftime("%b %d, %Y • %I:%M %p")
+            except Exception:
+                return received_at.strftime("%b %d, %Y • %I:%M %p")
+        return str(received_at)
+    except Exception:
+        return str(received_at)
+
+
+def send_ntfy_alert(topic_name: str, sender: str, subject: str, summary: str, platform: str = "Email", received_at=None) -> bool:
     """
     Sends an instant push notification to your phone via ntfy.sh (Zero bot/account setup needed).
     """
@@ -16,12 +38,16 @@ def send_ntfy_alert(topic_name: str, sender: str, subject: str, summary: str, pl
         return False
 
     clean_summary = summary.replace("### Summary", "").replace("### Content", "").strip()
+    time_str = _format_timestamp(received_at)
+    time_line = f"🕒 Received: {time_str}\n" if time_str else ""
 
     body = (
-        f"Platform: {platform}\n"
-        f"From: {sender}\n"
-        f"Subject: {subject}\n\n"
-        f"Summary:\n{clean_summary}"
+        f"🌐 Platform: {platform}\n"
+        f"{time_line}"
+        f"👤 From: {sender}\n"
+        f"📌 Subject: {subject}\n\n"
+        f"━━━━━━━━━━━━━━━━━━\n"
+        f"📝 AI Summary:\n{clean_summary}"
     )
 
     url = f"https://ntfy.sh/{ntfy_topic.strip()}"
@@ -44,7 +70,7 @@ def send_ntfy_alert(topic_name: str, sender: str, subject: str, summary: str, pl
     return False
 
 
-def send_telegram_alert(topic_name: str, sender: str, subject: str, summary: str, platform: str = "Email", chat_id: str = None) -> bool:
+def send_telegram_alert(topic_name: str, sender: str, subject: str, summary: str, platform: str = "Email", chat_id: str = None, received_at=None) -> bool:
     """
     Sends a formatted notification to Telegram when an email match occurs.
     """
@@ -55,6 +81,8 @@ def send_telegram_alert(topic_name: str, sender: str, subject: str, summary: str
         return False
 
     clean_summary = summary.replace("### Summary", "").replace("### Content", "").strip()
+    time_str = _format_timestamp(received_at)
+    time_badge = f"  •  🕒 <b>Time:</b> {html.escape(time_str)}" if time_str else ""
 
     safe_topic = html.escape(topic_name)
     safe_platform = html.escape(platform)
@@ -64,7 +92,7 @@ def send_telegram_alert(topic_name: str, sender: str, subject: str, summary: str
 
     message_text = (
         f"🔔 <b>Matched Topic:</b> {safe_topic}\n"
-        f"🌐 <b>Platform:</b> {safe_platform}\n\n"
+        f"🌐 <b>Platform:</b> {safe_platform}{time_badge}\n\n"
         f"👤 <b>From:</b> {safe_sender}\n"
         f"📌 <b>Subject:</b> {safe_subject}\n\n"
         f"━━━━━━━━━━━━━━━━━━\n"
@@ -99,10 +127,10 @@ def send_telegram_alert(topic_name: str, sender: str, subject: str, summary: str
         return False
 
 
-def send_mobile_alert(topic_name: str, sender: str, subject: str, summary: str, platform: str = "Email") -> bool:
+def send_mobile_alert(topic_name: str, sender: str, subject: str, summary: str, platform: str = "Email", received_at=None) -> bool:
     """
-    Tries configured notification providers (ntfy.sh and Telegram) with platform identifier.
+    Tries configured notification providers (ntfy.sh and Telegram) with platform identifier and email arrival timestamp.
     """
-    sent_ntfy = send_ntfy_alert(topic_name, sender, subject, summary, platform=platform)
-    sent_telegram = send_telegram_alert(topic_name, sender, subject, summary, platform=platform)
+    sent_ntfy = send_ntfy_alert(topic_name, sender, subject, summary, platform=platform, received_at=received_at)
+    sent_telegram = send_telegram_alert(topic_name, sender, subject, summary, platform=platform, received_at=received_at)
     return sent_ntfy or sent_telegram
