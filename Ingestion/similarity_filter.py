@@ -10,7 +10,7 @@ def cosine_similarity(vec_a: np.ndarray, matrix_b: np.ndarray) -> np.ndarray:
     return np.dot(matrix_b, vec_a)
 
 
-def evaluate_chunk_similarities(topic_vector: list[float], chunks: list[str], threshold: float = 0.35) -> dict:
+def evaluate_chunk_similarities(topic_vector: list[float], chunks: list[str], threshold: float = 0.45) -> dict:
     """
     Computes cosine similarity between topic embedding vector and each email chunk.
     Returns rich diagnostics including all scores, max score, candidate matches, and execution duration.
@@ -55,7 +55,7 @@ def evaluate_chunk_similarities(topic_vector: list[float], chunks: list[str], th
     }
 
 
-def find_candidate_chunks(topic_vector: list[float], chunks: list[str], threshold: float = 0.35):
+def find_candidate_chunks(topic_vector: list[float], chunks: list[str], threshold: float = 0.45):
     """
     Backward-compatible convenience wrapper returning candidate chunk list.
     """

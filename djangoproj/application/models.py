@@ -15,7 +15,7 @@ class Topic(models.Model):
 
     embedding = models.TextField(null=True, blank=True)
 
-    similarity_threshold = models.FloatField(default=0.35)  # for embedding cosine score
+    similarity_threshold = models.FloatField(default=0.45)  # for embedding cosine score
     relevance_threshold = models.FloatField(default=0.50)   # for relevancy score
 
     def get_embedding_vector(self) -> List[float]:

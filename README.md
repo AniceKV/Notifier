@@ -163,7 +163,7 @@ Once the server is running, complete these steps in the browser to start receivi
 - Under **AI Topic Classifiers**, click **Add Topic**:
   - **Topic Name**: (e.g. `Machine Learning Research`, `Job Offers`, `Internship Updates`)
   - **Description**: What you are looking for (e.g. `Paper acceptances, NeurIPS/ICLR updates, PyTorch releases`).
-  - **Similarity Threshold**: Default `0.35` / `0.50`.
+  - **Similarity Threshold**: Default `0.45`.
 
 #### Step 5: (Optional) Subscribe to Mobile Notifications
 - Install the free **ntfy** app on your phone (Android / iOS).
