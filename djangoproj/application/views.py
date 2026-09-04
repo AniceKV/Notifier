@@ -5,13 +5,12 @@ from django.views.generic import ListView, CreateView, UpdateView, DeleteView, D
 from django.urls import reverse_lazy
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
-from django.core.management import call_command
-
 from datetime import timedelta
 from django.utils import timezone
 
 from application.models import Topic, Email, EmailMatch, UserMailbox, UserProfile
 from application.forms import TopicForm, UserProfileForm, UserMailboxForm, GeminiApiKeyForm
+from application.tasks import sync_mailbox_task
 
 
 class InboxView(LoginRequiredMixin, View):
@@ -228,14 +227,20 @@ class ProfileView(LoginRequiredMixin, View):
 
 class SyncEmailsView(LoginRequiredMixin, View):
     """
-    Triggers the management command from the browser specifically for the logged-in user.
+    Queues a background sync for the logged-in user's active mailboxes
+    instead of blocking the request on IMAP + LLM calls.
     """
     def post(self, request):
-        try:
-            call_command('sync_mails', user_id=request.user.id)
-            messages.success(request, "Inbox synced successfully! Checked for new emails.")
-        except Exception as e:
-            messages.error(request, f"Sync notice: {e}")
+        mailboxes = UserMailbox.objects.filter(user=request.user, is_active=True)
+
+        if not mailboxes.exists():
+            messages.warning(request, "No active mailboxes to sync.")
+            return redirect('inbox')
+
+        for mailbox in mailboxes:
+            sync_mailbox_task.delay(mailbox.id)
+
+        messages.success(request, "Sync started — new emails will appear in a moment.")
         return redirect('inbox')
 
 
