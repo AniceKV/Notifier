@@ -39,7 +39,7 @@ flowchart TD
    - Generates high-fidelity vector embeddings via `all-mpnet-base-v2` (768-dimensional).
    - Compares vector embeddings against user topics to discard irrelevant mail at near-zero cost.
 2. **Stage 2 — LLM Semantic Verification & Structured Synthesis**:
-   - Forwards candidate chunks to Google Gemini (`gemini-2.5-flash`).
+   - Forwards candidate chunks to Google Gemini (`gemini-2.5-flash-lite`).
    - Verifies whether the email genuinely matches the topic context.
    - Extracts structured key takeaways and action items.
 3. **Stage 3 — Real-Time Mobile Dispatch**:
