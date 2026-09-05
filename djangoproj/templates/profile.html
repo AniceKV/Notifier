@@ -2,516 +2,622 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <meta content="width=device-width, initial-scale=1.0" name="viewport">
-    <title>Profile &amp; Mailbox Settings - Notifier</title>
-    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile & Settings — Notifier</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
     <script>
-        if (localStorage.getItem('theme') === 'light') {
-            document.documentElement.classList.remove('dark');
-        } else {
+        if (localStorage.getItem('theme') === 'dark') {
             document.documentElement.classList.add('dark');
         }
     </script>
     <style>
+        *, *::before, *::after { box-sizing: border-box; }
+        body { margin: 0; padding: 0; }
+
         :root {
-            --color-background: 250 248 255;
-            --color-surface-lowest: 255 255 255;
-            --color-surface-low: 242 243 255;
-            --color-surface: 234 237 255;
-            --color-surface-high: 226 231 255;
-            --color-surface-highest: 218 226 253;
-            --color-on-surface: 19 27 46;
-            --color-on-surface-variant: 67 70 85;
-            --color-outline-variant: 195 198 215;
-            --color-outline: 115 118 134;
-            --color-primary: 0 74 198;
-            --color-primary-container: 37 99 235;
-            --color-on-primary: 255 255 255;
-            --color-secondary: 81 95 116;
+            --bg:      #FAFAF9;
+            --surface: #FFFFFF;
+            --border:  #E5E5E5;
+            --text:    #171717;
+            --muted:   #737373;
+            --faint:   #A3A3A3;
+            --hover:   #F5F5F4;
+            --accent:  #4A7BB0;
+            --error:   #b91c1c;
+            --error-bg:#fef2f2;
+            --header-h: 48px;
+        }
+        .dark {
+            --bg:      #111113;
+            --surface: #18191d;
+            --border:  #2a2b30;
+            --text:    #EBEBEA;
+            --muted:   #8A8F9B;
+            --faint:   #5a5c66;
+            --hover:   #1e1f24;
+            --accent:  #5B90CC;
         }
 
-        html.dark {
-            /* Editorial Charcoal/Black Minimalist Palette from Spec */
-            --color-background: 18 19 22;              /* #121316 Deep Charcoal Black Canvas */
-            --color-surface-lowest: 21 22 27;          /* #15161b Elevated Card Background */
-            --color-surface-low: 26 28 34;             /* #1a1c22 Inset Metadata & Summary Box */
-            --color-surface: 32 34 42;                 /* #20222a Container/Pill Background */
-            --color-surface-high: 40 43 54;            /* #282b36 Hover Card / Inset */
-            --color-surface-highest: 50 54 68;         /* #323644 Active Row */
-            --color-on-surface: 234 232 225;           /* #eae8e1 Warm Crisp Off-White */
-            --color-on-surface-variant: 138 143 155;   /* #8a8f9b Cool Neutral Slate-Grey */
-            --color-outline-variant: 36 39 50;         /* #242732 Structural 1px Divider */
-            --color-outline: 68 72 88;                 /* #444858 Interactive Border */
-            --color-primary: 82 140 212;               /* #528cd4 Technical Slate/Cobalt Blue */
-            --color-primary-container: 70 125 195;     /* #467dc3 */
-            --color-on-primary: 255 255 255;
-            --color-secondary: 138 143 155;            /* #8a8f9b */
+        body {
+            font-family: 'Inter', ui-sans-serif, system-ui;
+            font-size: 13px;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
         }
 
-        html.dark select option {
-            background-color: #1a1c22;
-            color: #eae8e1;
+        /* ── Header ── */
+        .app-header {
+            position: fixed; top: 0; left: 0; right: 0;
+            height: var(--header-h); z-index: 100;
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            display: flex; align-items: center;
+            padding: 0 20px; gap: 16px;
+            justify-content: space-between;
         }
+        .brand {
+            display: flex; align-items: center; gap: 7px;
+            text-decoration: none; font-size: 14px; font-weight: 600;
+            color: var(--text); letter-spacing: -0.01em;
+        }
+        .brand .material-symbols-outlined { font-size: 20px; color: var(--accent); }
+        .header-right { display: flex; align-items: center; gap: 8px; }
+
+        .btn-sm {
+            font-size: 12px; font-weight: 500; padding: 4px 10px;
+            border-radius: 5px; cursor: pointer; border: none;
+            display: inline-flex; align-items: center; gap: 4px;
+            font-family: inherit;
+        }
+        .btn-primary { background: var(--accent); color: #fff; }
+        .btn-primary:hover { background: #1d4ed8; }
+        .btn-ghost {
+            background: transparent; color: var(--muted);
+            border: 1px solid var(--border);
+        }
+        .btn-ghost:hover { color: var(--text); background: var(--hover); }
+        .btn-danger {
+            background: transparent; color: var(--error);
+            border: 1px solid var(--border);
+        }
+        .btn-danger:hover { background: var(--error-bg); border-color: #fecaca; }
+
+        .icon-btn {
+            width: 28px; height: 28px; border-radius: 50%;
+            border: 1px solid var(--border); background: transparent;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; color: var(--muted); text-decoration: none;
+        }
+        .icon-btn .material-symbols-outlined { font-size: 16px; }
+        .icon-btn:hover { color: var(--text); background: var(--hover); }
+
+        /* ── Page layout ── */
+        .page-content {
+            max-width: 860px; margin: 0 auto;
+            padding: calc(var(--header-h) + 32px) 20px 64px;
+        }
+
+        .page-title {
+            font-size: 18px; font-weight: 600; letter-spacing: -0.01em;
+            color: var(--text); margin: 0 0 4px;
+        }
+        .page-subtitle {
+            font-size: 12px; color: var(--muted); margin: 0 0 32px;
+        }
+
+        /* ── Flash messages ── */
+        .flash-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px; }
+        .flash {
+            font-size: 12px; padding: 9px 14px; border-radius: 6px;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .flash-success { background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; }
+        .flash-error   { background: var(--error-bg); color: var(--error); border: 1px solid #fecaca; }
+        .flash .material-symbols-outlined { font-size: 15px; }
+
+        /* ── Settings sections ── */
+        .settings-section {
+            border-top: 1px solid var(--border);
+            padding: 28px 0;
+        }
+        .settings-section:first-of-type { border-top: none; padding-top: 0; }
+
+        .section-layout {
+            display: grid;
+            grid-template-columns: 200px 1fr;
+            gap: 32px;
+        }
+        @media (max-width: 640px) {
+            .section-layout { grid-template-columns: 1fr; gap: 16px; }
+        }
+
+        .section-meta { }
+        .section-title {
+            font-size: 13px; font-weight: 600; color: var(--text);
+            margin: 0 0 6px; display: flex; align-items: center; gap: 6px;
+        }
+        .section-title .material-symbols-outlined { font-size: 16px; color: var(--accent); }
+        .section-desc { font-size: 12px; color: var(--muted); line-height: 1.55; margin: 0; }
+        .section-note {
+            display: flex; align-items: center; gap: 5px;
+            font-size: 11px; color: var(--faint); margin-top: 10px;
+        }
+        .section-note-dot { width: 6px; height: 6px; border-radius: 50%; background: #22c55e; flex-shrink: 0; }
+
+        /* ── Form elements ── */
+        .form-grid {
+            display: grid; grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        @media (max-width: 480px) { .form-grid { grid-template-columns: 1fr; } }
+
+        .form-field { display: flex; flex-direction: column; gap: 4px; }
+        .form-field.full { grid-column: 1 / -1; }
+
+        label.field-label {
+            font-size: 11px; font-weight: 600; color: var(--text);
+        }
+        .field-hint { font-size: 11px; color: var(--faint); margin-top: 2px; }
+        .field-hint code { font-family: 'SFMono-Regular', Consolas, monospace; font-size: 10px; }
+
+        input[type="text"],
+        input[type="email"],
+        input[type="password"],
+        input[type="number"],
+        input[type="url"],
+        select,
+        textarea {
+            width: 100%;
+            font-family: inherit; font-size: 13px;
+            color: var(--text); background: var(--surface);
+            border: 1px solid var(--border); border-radius: 5px;
+            padding: 6px 10px; outline: none;
+            transition: border-color 0.15s;
+        }
+        input:focus, select:focus, textarea:focus { border-color: var(--accent); }
+        textarea { resize: vertical; line-height: 1.5; }
+        select option { background: var(--surface); }
+
+        /* ── Status card (LM Studio current config) ── */
+        .status-card {
+            background: var(--bg); border: 1px solid var(--border);
+            border-radius: 6px; padding: 12px 14px;
+            margin-bottom: 16px;
+        }
+        .status-card-row {
+            display: flex; align-items: center; justify-content: space-between;
+            gap: 12px; flex-wrap: wrap;
+        }
+        .status-card-info { display: flex; flex-direction: column; gap: 3px; }
+        .status-model {
+            font-size: 12px; font-weight: 600; color: var(--text);
+            display: flex; align-items: center; gap: 8px;
+        }
+        .model-tag {
+            font-size: 11px; font-weight: 500; color: var(--accent);
+            background: #eff6ff; border: 1px solid #bfdbfe;
+            padding: 1px 7px; border-radius: 4px; font-family: 'SFMono-Regular', Consolas, monospace;
+        }
+        .dark .model-tag { background: #1e3a5f; border-color: #2563EB40; }
+        .status-endpoint { font-size: 11px; color: var(--muted); font-family: 'SFMono-Regular', Consolas, monospace; }
+        .status-actions { display: flex; align-items: center; gap: 6px; }
+        .status-live { display: flex; align-items: center; gap: 5px; font-size: 11px; color: #15803d; margin-top: 6px; }
+        .status-live-dot { width: 6px; height: 6px; border-radius: 50%; background: #22c55e; animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+        /* ── List rows (mailboxes, topics) ── */
+        .list-rows { display: flex; flex-direction: column; }
+        .list-row {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--border);
+            gap: 12px;
+        }
+        .list-row:last-child { border-bottom: none; }
+        .list-row-main { display: flex; align-items: center; gap: 10px; min-width: 0; }
+        .list-row-icon {
+            width: 30px; height: 30px; border-radius: 5px;
+            background: var(--hover); border: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: center;
+            color: var(--accent); flex-shrink: 0;
+        }
+        .list-row-icon .material-symbols-outlined { font-size: 16px; }
+        .list-row-text { min-width: 0; }
+        .list-row-name { font-size: 13px; font-weight: 500; color: var(--text); }
+        .list-row-detail { font-size: 11px; color: var(--muted); margin-top: 1px; font-family: 'SFMono-Regular', Consolas, monospace; }
+        .list-row-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+        .row-action-link { font-size: 12px; font-weight: 500; color: var(--accent); text-decoration: none; }
+        .row-action-link:hover { text-decoration: underline; }
+        .row-action-sep { color: var(--border); }
+        .row-action-delete { font-size: 12px; font-weight: 500; color: var(--error); background: none; border: none; cursor: pointer; font-family: inherit; padding: 0; }
+        .row-action-delete:hover { text-decoration: underline; }
+
+        /* platform badge on mailbox row */
+        .platform-tag {
+            font-size: 10px; font-weight: 600; color: var(--muted);
+            background: var(--hover); border: 1px solid var(--border);
+            padding: 1px 6px; border-radius: 3px; text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        /* empty state */
+        .empty-note { font-size: 12px; color: var(--faint); font-style: italic; padding: 8px 0; }
+
+        /* ── Add-form sub-section ── */
+        .add-form-section { margin-top: 16px; }
+        .add-form-label {
+            font-size: 10px; font-weight: 700; letter-spacing: 0.06em;
+            text-transform: uppercase; color: var(--faint); margin-bottom: 12px;
+            display: block;
+        }
+
+        /* ── Scrollbar ── */
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
     </style>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script id="tailwind-config">
-    tailwind.config = {
-        darkMode: "class",
-        theme: {
-            extend: {
-                colors: {
-                    "background": "rgb(var(--color-background) / <alpha-value>)",
-                    "surface": "rgb(var(--color-background) / <alpha-value>)",
-                    "surface-container-lowest": "rgb(var(--color-surface-lowest) / <alpha-value>)",
-                    "surface-container-low": "rgb(var(--color-surface-low) / <alpha-value>)",
-                    "surface-container": "rgb(var(--color-surface) / <alpha-value>)",
-                    "surface-container-high": "rgb(var(--color-surface-high) / <alpha-value>)",
-                    "surface-container-highest": "rgb(var(--color-surface-highest) / <alpha-value>)",
-                    "on-surface": "rgb(var(--color-on-surface) / <alpha-value>)",
-                    "on-surface-variant": "rgb(var(--color-on-surface-variant) / <alpha-value>)",
-                    "outline": "rgb(var(--color-outline) / <alpha-value>)",
-                    "outline-variant": "rgb(var(--color-outline-variant) / <alpha-value>)",
-                    "primary": "rgb(var(--color-primary) / <alpha-value>)",
-                    "primary-container": "rgb(var(--color-primary-container) / <alpha-value>)",
-                    "on-primary": "rgb(var(--color-on-primary) / <alpha-value>)",
-                    "secondary": "rgb(var(--color-secondary) / <alpha-value>)",
-                    "error": "#ba1a1a",
-                    "error-container": "#ffdad6",
-                    "on-error": "#ffffff",
-                },
-                borderRadius: {
-                    "DEFAULT": "0.25rem",
-                    "lg": "0.375rem",
-                    "xl": "0.5rem",
-                    "full": "9999px"
-                },
-                spacing: {
-                    "space-2xs": "0.125rem",
-                    "space-xs": "0.25rem",
-                    "space-sm": "0.5rem",
-                    "space-md": "0.75rem",
-                    "space-base": "1rem",
-                    "space-lg": "1.5rem",
-                    "space-xl": "2rem",
-                    "space-2xl": "3rem"
-                },
-                fontFamily: {
-                    sans: ["Geist", "Inter", "sans-serif"],
-                }
-            }
-        }
-    };
-    </script>
 </head>
-<body class="bg-background text-on-surface font-sans min-h-screen">
-    <!-- Top Global Header -->
-    <header class="fixed top-0 left-0 right-0 z-50 bg-surface-container-lowest border-b border-outline-variant/60 shadow-xs">
-        <div class="h-14 max-w-[1120px] mx-auto px-4 sm:px-6 flex items-center justify-between">
-            <div class="flex items-center gap-6">
-                <a href="{% url 'inbox' %}" class="flex items-center gap-2 text-primary font-bold text-lg tracking-tight">
-                    <span class="material-symbols-outlined text-[24px]">mark_email_unread</span>
-                    <span>Notifier</span>
-                </a>
+<body>
+
+<!-- ── Header ── -->
+<header class="app-header">
+    <a class="brand" href="{% url 'inbox' %}">
+        <span class="material-symbols-outlined">mark_email_read</span>
+        Notifier
+    </a>
+    <div class="header-right">
+        <a href="{% url 'inbox' %}" class="btn-sm btn-ghost" style="text-decoration:none;">
+            <span class="material-symbols-outlined" style="font-size:14px;">arrow_back</span>
+            Inbox
+        </a>
+        <button class="icon-btn" id="theme-toggle" title="Toggle theme">
+            <span class="material-symbols-outlined" id="theme-icon">dark_mode</span>
+        </button>
+        <form action="/accounts/logout/" method="post" style="margin:0;display:inline;">
+            {% csrf_token %}
+            <button class="btn-sm btn-ghost" type="submit">Logout</button>
+        </form>
+    </div>
+</header>
+
+<!-- ── Page ── -->
+<main class="page-content">
+
+    <h1 class="page-title">Profile &amp; Settings</h1>
+    <p class="page-subtitle">Manage your account, connected mailboxes, AI model, and topic filters.</p>
+
+    <!-- Flash messages -->
+    {% if messages %}
+        <div class="flash-list">
+            {% for message in messages %}
+                <div class="flash {% if message.tags == 'error' %}flash-error{% else %}flash-success{% endif %}">
+                    <span class="material-symbols-outlined">{% if message.tags == 'error' %}error{% else %}check_circle{% endif %}</span>
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <!-- ════════════════════════════════════════
+         1. PERSONAL INFORMATION
+    ════════════════════════════════════════ -->
+    <div class="settings-section">
+        <div class="section-layout">
+            <div class="section-meta">
+                <h2 class="section-title">
+                    <span class="material-symbols-outlined">person</span>
+                    Account
+                </h2>
+                <p class="section-desc">Credentials used to log in and manage your workspace.</p>
             </div>
 
-            <div class="flex items-center gap-3">
-                <!-- Theme Toggle Button -->
-                <button id="theme-toggle" type="button" aria-label="Toggle theme" title="Toggle dark/light mode"
-                        class="w-8 h-8 rounded-full bg-surface-container-low border border-outline-variant/60 flex items-center justify-center text-on-surface-variant hover:text-on-surface hover:border-outline transition-colors cursor-pointer">
-                    <span class="material-symbols-outlined text-[18px] dark:hidden">dark_mode</span>
-                    <span class="material-symbols-outlined text-[18px] hidden dark:inline-block text-amber-400">light_mode</span>
-                </button>
-
-                <a href="{% url 'inbox' %}" class="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline">
-                    <span class="material-symbols-outlined text-[16px]">arrow_back</span>
-                    <span>Back to Inbox</span>
-                </a>
-                <form action="/accounts/logout/" method="post" class="inline-flex m-0">
+            <div>
+                <form method="post" style="margin:0;">
                     {% csrf_token %}
-                    <button type="submit" class="inline-flex items-center text-xs font-medium bg-surface-container-low text-on-surface-variant hover:text-on-surface px-2.5 py-1.5 rounded border border-outline-variant/60 transition-colors">
-                        Logout
-                    </button>
+                    <div class="form-grid">
+                        <div class="form-field">
+                            <label class="field-label" for="{{ user_form.username.id_for_label }}">Username</label>
+                            <input type="text" name="username" id="{{ user_form.username.id_for_label }}"
+                                   value="{{ user_form.username.value|default:'' }}" required>
+                        </div>
+                        <div class="form-field">
+                            <label class="field-label" for="{{ user_form.email.id_for_label }}">Email address</label>
+                            <input type="email" name="email" id="{{ user_form.email.id_for_label }}"
+                                   value="{{ user_form.email.value|default:'' }}" required>
+                        </div>
+                        <div class="form-field">
+                            <label class="field-label" for="{{ user_form.first_name.id_for_label }}">First name</label>
+                            <input type="text" name="first_name" id="{{ user_form.first_name.id_for_label }}"
+                                   value="{{ user_form.first_name.value|default:'' }}">
+                        </div>
+                        <div class="form-field">
+                            <label class="field-label" for="{{ user_form.last_name.id_for_label }}">Last name</label>
+                            <input type="text" name="last_name" id="{{ user_form.last_name.id_for_label }}"
+                                   value="{{ user_form.last_name.value|default:'' }}">
+                        </div>
+                    </div>
+                    <div style="margin-top:14px;">
+                        <button class="btn-sm btn-primary" type="submit" name="update_profile">Save changes</button>
+                    </div>
                 </form>
             </div>
         </div>
-    </header>
+    </div>
 
-    <!-- Main Container -->
-    <main class="w-full pt-20 pb-16 min-h-screen">
-        <div class="max-w-[1120px] mx-auto px-4 sm:px-6">
-
-            <!-- Page Title -->
-            <div class="mb-6">
-                <h1 class="text-2xl font-bold text-on-surface tracking-tight">User Profile &amp; Settings</h1>
-                <p class="text-sm text-on-surface-variant mt-1">Manage your credentials, connected IMAP mailboxes, and AI topic classifiers.</p>
+    <!-- ════════════════════════════════════════
+         2. AI MODEL (LM Studio)
+    ════════════════════════════════════════ -->
+    <div class="settings-section">
+        <div class="section-layout">
+            <div class="section-meta">
+                <h2 class="section-title">
+                    <span class="material-symbols-outlined">smart_toy</span>
+                    AI model
+                </h2>
+                <p class="section-desc">
+                    Connects to LM Studio or any OpenAI-compatible endpoint for semantic classification and summaries.
+                </p>
+                <div class="section-note">
+                    <span class="section-note-dot"></span>
+                    100% local &amp; private
+                </div>
             </div>
 
-            <!-- Flash Messages -->
-            {% if messages %}
-                <div class="mb-6 space-y-2">
-                    {% for message in messages %}
-                        <div class="p-3.5 rounded-lg border text-sm flex items-center justify-between {% if message.tags == 'error' %}bg-error-container text-error border-error/30{% else %}bg-[#f0fdf4] text-[#15803d] border-[#bbf7d0]{% endif %}">
-                            <div class="flex items-center gap-2">
-                                <span class="material-symbols-outlined text-[18px]">{% if message.tags == 'error' %}error{% else %}check_circle{% endif %}</span>
-                                <span>{{ message }}</span>
+            <div>
+                <!-- Current config status -->
+                <div class="status-card">
+                    <div class="status-card-row">
+                        <div class="status-card-info">
+                            <div class="status-model">
+                                Active model
+                                <span class="model-tag">{{ profile.get_lm_studio_model }}</span>
                             </div>
+                            <div class="status-endpoint">{{ profile.get_lm_studio_url }}</div>
                         </div>
-                    {% endfor %}
-                </div>
-            {% endif %}
-
-            <!-- SECTION 1: Personal Information -->
-            <section class="bg-surface-container-lowest rounded-lg border border-outline-variant/80 p-6 shadow-xs mb-8">
-                <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
-                    <div class="md:col-span-4">
-                        <div class="flex items-center gap-2 text-primary font-bold text-base mb-1">
-                            <span class="material-symbols-outlined text-[20px]">badge</span>
-                            <h2>1. Personal Information</h2>
-                        </div>
-                        <p class="text-xs text-on-surface-variant leading-relaxed">
-                            Account credentials used for logging in and managing your personal notification workspace.
-                        </p>
-                    </div>
-
-                    <div class="md:col-span-8">
-                        <form method="post" class="space-y-4">
-                            {% csrf_token %}
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div>
-                                    <label class="block text-xs font-semibold text-on-surface mb-1" for="{{ user_form.username.id_for_label }}">Username</label>
-                                    <input type="text" name="username" id="{{ user_form.username.id_for_label }}" value="{{ user_form.username.value|default:'' }}" required
-                                           class="w-full h-9 px-3 bg-surface-container-lowest text-on-surface text-sm rounded border border-outline-variant focus:outline-none focus:ring-2 focus:ring-primary">
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-semibold text-on-surface mb-1" for="{{ user_form.email.id_for_label }}">Email Address</label>
-                                    <input type="email" name="email" id="{{ user_form.email.id_for_label }}" value="{{ user_form.email.value|default:'' }}" required
-                                           class="w-full h-9 px-3 bg-surface-container-lowest text-on-surface text-sm rounded border border-outline-variant focus:outline-none focus:ring-2 focus:ring-primary">
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-semibold text-on-surface mb-1" for="{{ user_form.first_name.id_for_label }}">First Name</label>
-                                    <input type="text" name="first_name" id="{{ user_form.first_name.id_for_label }}" value="{{ user_form.first_name.value|default:'' }}"
-                                           class="w-full h-9 px-3 bg-surface-container-lowest text-on-surface text-sm rounded border border-outline-variant focus:outline-none focus:ring-2 focus:ring-primary">
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-semibold text-on-surface mb-1" for="{{ user_form.last_name.id_for_label }}">Last Name</label>
-                                    <input type="text" name="last_name" id="{{ user_form.last_name.id_for_label }}" value="{{ user_form.last_name.value|default:'' }}"
-                                           class="w-full h-9 px-3 bg-surface-container-lowest text-on-surface text-sm rounded border border-outline-variant focus:outline-none focus:ring-2 focus:ring-primary">
-                                </div>
-                            </div>
-                            <button type="submit" name="update_profile" class="inline-flex items-center px-4 py-2 bg-primary text-on-primary text-xs font-semibold rounded hover:bg-primary-container transition-colors shadow-xs">
-                                Save Personal Info
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            </section>
-
-            <!-- SECTION 2: AI Intelligence & LM Studio / OpenAI-Compatible LLM -->
-            <section class="bg-surface-container-lowest rounded-lg border border-outline-variant/80 p-6 shadow-xs mb-8">
-                <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
-                    <div class="md:col-span-4">
-                        <div class="flex items-center gap-2 text-primary font-bold text-base mb-1">
-                            <span class="material-symbols-outlined text-[20px]">smart_toy</span>
-                            <h2>2. LM Studio &amp; Local AI</h2>
-                        </div>
-                        <p class="text-xs text-on-surface-variant leading-relaxed">
-                            Notifier connects to <strong>LM Studio</strong> (or any OpenAI-compatible local/remote server) for stage-2 semantic relevance verification and structured email summaries.
-                        </p>
-                        <div class="mt-3 flex flex-col gap-1.5 text-[11px] text-on-surface-variant font-mono">
-                            <div class="flex items-center gap-1.5">
-                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                                <span>OpenAI-compatible REST API</span>
-                            </div>
-                            <div class="flex items-center gap-1.5">
-                                <span class="w-1.5 h-1.5 rounded-full bg-cyan-500"></span>
-                                <span>100% Local, Private &amp; Zero-Cost</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="md:col-span-8 space-y-4">
-                        <!-- Active LM Studio Status Card -->
-                        <div class="p-4 bg-surface-container-low/70 rounded-lg border border-outline-variant/60">
-                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-outline-variant/40">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-9 h-9 rounded-lg bg-primary/10 text-primary flex items-center justify-center font-bold">
-                                        <span class="material-symbols-outlined text-[20px]">memory</span>
-                                    </div>
-                                    <div>
-                                        <div class="flex items-center gap-2">
-                                            <span class="font-bold text-xs text-on-surface">Target Model:</span>
-                                            <span class="px-2 py-0.5 rounded text-[11px] font-mono font-bold bg-primary/15 text-primary border border-primary/25">
-                                                {{ profile.get_lm_studio_model }}
-                                            </span>
-                                        </div>
-                                        <p class="text-[11px] font-mono text-on-surface-variant mt-0.5">
-                                            Endpoint: <span class="text-on-surface font-semibold">{{ profile.get_lm_studio_url }}</span>
-                                        </p>
-                                    </div>
-                                </div>
-                                <div class="flex items-center gap-2">
-                                    <!-- Test Connection Button -->
-                                    <form method="post" class="m-0">
-                                        {% csrf_token %}
-                                        <input type="hidden" name="lm_studio_url" value="{{ profile.get_lm_studio_url }}">
-                                        <input type="hidden" name="lm_studio_model" value="{{ profile.get_lm_studio_model }}">
-                                        <button type="submit" name="test_lm_connection" 
-                                                class="inline-flex items-center gap-1.5 text-xs font-semibold text-primary bg-primary/10 hover:bg-primary/20 px-3 py-1.5 rounded transition-colors border border-primary/20">
-                                            <span class="material-symbols-outlined text-[15px]">bolt</span>
-                                            <span>Test Connection</span>
-                                        </button>
-                                    </form>
-
-                                    <!-- Reset Defaults Button -->
-                                    <form method="post" class="m-0">
-                                        {% csrf_token %}
-                                        <button type="submit" name="reset_lm_config" onclick="return confirm('Reset LM Studio settings to default (http://127.0.0.1:1234/v1, qwen/qwen3-1.7b)?');"
-                                                class="text-xs font-semibold text-on-surface-variant hover:text-error hover:bg-error-container/40 px-2.5 py-1.5 rounded transition-colors" title="Reset to default local settings">
-                                            <span class="material-symbols-outlined text-[15px]">restart_alt</span>
-                                        </button>
-                                    </form>
-                                </div>
-                            </div>
-
-                            <div class="pt-2.5 flex items-center justify-between text-[11px] text-on-surface-variant">
-                                <span>API Auth: <span class="font-mono text-on-surface font-medium">{{ profile.masked_lm_studio_api_key }}</span></span>
-                                <span class="text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1">
-                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                                    Local Engine Ready
-                                </span>
-                            </div>
-                        </div>
-
-                        <!-- Configuration Form -->
-                        <form method="post" class="space-y-4 bg-surface-container-low/40 p-4 rounded-lg border border-outline-variant/60">
-                            {% csrf_token %}
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                <div>
-                                    <label class="block text-xs font-semibold text-on-surface mb-1" for="{{ lm_config_form.lm_studio_url.id_for_label }}">
-                                        LM Studio Base URL
-                                    </label>
-                                    {{ lm_config_form.lm_studio_url }}
-                                    <p class="text-[10px] text-on-surface-variant mt-1">
-                                        Default: <code>http://127.0.0.1:1234/v1</code>
-                                    </p>
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-semibold text-on-surface mb-1" for="{{ lm_config_form.lm_studio_model.id_for_label }}">
-                                        Model Identifier
-                                    </label>
-                                    {{ lm_config_form.lm_studio_model }}
-                                    <p class="text-[10px] text-on-surface-variant mt-1">
-                                        Loaded model in LM Studio (e.g. <code>qwen/qwen3-1.7b</code>)
-                                    </p>
-                                </div>
-                            </div>
-
-                            <div>
-                                <label class="block text-xs font-semibold text-on-surface mb-1" for="{{ lm_config_form.lm_studio_api_key.id_for_label }}">
-                                    API Key (Optional)
-                                </label>
-                                {{ lm_config_form.lm_studio_api_key }}
-                                <p class="text-[11px] text-on-surface-variant mt-1 leading-relaxed">
-                                    For local LM Studio, you can leave this blank (defaults to <code>lm-studio</code>). If provided, it is securely encrypted with AES/Fernet encryption.
-                                </p>
-                            </div>
-
-                            <div class="flex items-center gap-3 pt-1">
-                                <button type="submit" name="save_lm_config" class="inline-flex items-center gap-1.5 px-4 py-2 bg-primary text-on-primary text-xs font-semibold rounded hover:bg-primary-container transition-colors shadow-xs">
-                                    <span class="material-symbols-outlined text-[16px]">save</span>
-                                    <span>Save LM Studio Settings</span>
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </section>
-
-            <!-- SECTION 4: AI Topic Classifiers -->
-            <section class="bg-surface-container-lowest rounded-lg border border-outline-variant/80 p-6 shadow-xs mb-8">
-                <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
-                    <div class="md:col-span-4">
-                        <div class="flex items-center gap-2 text-primary font-bold text-base mb-1">
-                            <span class="material-symbols-outlined text-[20px]">psychology</span>
-                            <h2>4. AI Topic Classifiers</h2>
-                        </div>
-                        <p class="text-xs text-on-surface-variant leading-relaxed">
-                            Define the topics, categories, or keywords that the AI uses to filter and summarize high-priority incoming emails.
-                        </p>
-                    </div>
-
-                    <div class="md:col-span-8 space-y-6">
-                        <!-- Active Topics List -->
-                        <div>
-                            <h3 class="text-xs font-bold uppercase tracking-wider text-secondary mb-3">Configured Topics</h3>
-                            {% if topics %}
-                                <div class="space-y-2">
-                                    {% for topic in topics %}
-                                        <div class="flex items-start justify-between p-3.5 bg-surface-container-low/70 rounded border border-outline-variant/60">
-                                            <div>
-                                                <div class="flex items-center gap-2">
-                                                    <span class="material-symbols-outlined text-[16px] text-primary">tag</span>
-                                                    <span class="font-bold text-xs text-on-surface">{{ topic.name }}</span>
-                                                </div>
-                                                <p class="text-xs text-on-surface-variant mt-1 leading-relaxed">{{ topic.description }}</p>
-                                            </div>
-                                            <div class="flex items-center gap-2 shrink-0 ml-4">
-                                                <a href="{% url 'edit_topic' topic.id %}" class="text-xs font-medium text-primary hover:underline">
-                                                    Edit
-                                                </a>
-                                                <span class="text-outline-variant">|</span>
-                                                <form method="post" action="{% url 'delete_topic' topic.id %}" class="m-0 inline">
-                                                    {% csrf_token %}
-                                                    <button type="submit" onclick="return confirm('Delete topic \'{{ topic.name }}\'?');" class="text-xs font-semibold text-error hover:underline">
-                                                        Delete
-                                                    </button>
-                                                </form>
-                                            </div>
-                                        </div>
-                                    {% endfor %}
-                                </div>
-                            {% else %}
-                                <p class="text-xs text-on-surface-variant italic">No topics configured yet.</p>
-                            {% endif %}
-                        </div>
-
-                        <!-- Add New Topic Form -->
-                        <div class="bg-surface-container-low/60 rounded-lg p-4 border border-outline-variant/60">
-                            <h3 class="text-xs font-bold uppercase tracking-wider text-secondary mb-3">Add a New Topic</h3>
-                            <form method="post" class="space-y-3">
+                        <div class="status-actions">
+                            <form method="post" style="margin:0;display:inline;">
                                 {% csrf_token %}
-                                <div>
-                                    <label class="block text-xs font-semibold text-on-surface mb-1">Topic Name</label>
-                                    <input type="text" name="name" required placeholder="e.g. Machine Learning Jobs, Funding Announcements"
-                                           class="w-full h-9 px-3 bg-surface-container-lowest text-on-surface text-sm rounded border border-outline-variant focus:outline-none focus:ring-2 focus:ring-primary">
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-semibold text-on-surface mb-1">Description / Keywords</label>
-                                    <textarea name="description" required rows="3" placeholder="Describe the types of emails to match..."
-                                              class="w-full p-3 bg-surface-container-lowest text-on-surface text-sm rounded border border-outline-variant focus:outline-none focus:ring-2 focus:ring-primary"></textarea>
-                                </div>
-                                <button type="submit" name="create_topic" class="inline-flex items-center px-4 py-2 bg-primary text-on-primary text-xs font-semibold rounded hover:bg-primary-container transition-colors shadow-xs">
-                                    + Add Topic
+                                <input type="hidden" name="lm_studio_url" value="{{ profile.get_lm_studio_url }}">
+                                <input type="hidden" name="lm_studio_model" value="{{ profile.get_lm_studio_model }}">
+                                <button class="btn-sm btn-ghost" type="submit" name="test_lm_connection">
+                                    <span class="material-symbols-outlined" style="font-size:14px;">bolt</span>
+                                    Test
+                                </button>
+                            </form>
+                            <form method="post" style="margin:0;display:inline;">
+                                {% csrf_token %}
+                                <button class="btn-sm btn-ghost" type="submit" name="reset_lm_config"
+                                        onclick="return confirm('Reset to defaults?');" title="Reset to local defaults">
+                                    <span class="material-symbols-outlined" style="font-size:14px;">restart_alt</span>
                                 </button>
                             </form>
                         </div>
                     </div>
-                </div>
-            </section>
-
-            <!-- SECTION 3: Connected Email Accounts -->
-            <section class="bg-surface-container-lowest rounded-lg border border-outline-variant/80 p-6 shadow-xs mb-8">
-                <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
-                    <div class="md:col-span-4">
-                        <div class="flex items-center gap-2 text-primary font-bold text-base mb-1">
-                            <span class="material-symbols-outlined text-[20px]">mark_email_read</span>
-                            <h2>3. Connected Mailboxes</h2>
-                        </div>
-                        <p class="text-xs text-on-surface-variant leading-relaxed">
-                            Connect multiple email inboxes (Gmail, Outlook, Yahoo, iCloud) via IMAP for background ingestion.
-                        </p>
-                        <div class="mt-3 flex items-center gap-1.5 text-[11px] text-on-surface-variant font-mono">
-                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                            <span>Passwords encrypted at rest (SHA-256 / AES)</span>
-                        </div>
-                    </div>
-
-                    <div class="md:col-span-8 space-y-6">
-                        <!-- Active Mailboxes List -->
-                        <div>
-                            <h3 class="text-xs font-bold uppercase tracking-wider text-secondary mb-3">Active Mailboxes</h3>
-                            {% if mailboxes %}
-                                <div class="space-y-2">
-                                    {% for mb in mailboxes %}
-                                        <div class="flex items-center justify-between p-3.5 bg-surface-container-low/70 rounded border border-outline-variant/60">
-                                            <div class="flex items-center gap-3">
-                                                <div class="w-8 h-8 rounded bg-surface-container flex items-center justify-center text-primary">
-                                                    <span class="material-symbols-outlined text-[18px]">mail</span>
-                                                </div>
-                                                <div>
-                                                    <div class="flex items-center gap-2">
-                                                        <span class="px-1.5 py-0.5 rounded bg-surface-container font-semibold text-xs text-on-surface">
-                                                            {{ mb.platform }}
-                                                        </span>
-                                                        <span class="text-xs font-semibold text-on-surface">{{ mb.email_address }}</span>
-                                                    </div>
-                                                    <div class="text-[11px] font-mono text-on-surface-variant mt-0.5">
-                                                        {{ mb.imap_server }}:{{ mb.imap_port }} • SSL Active
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <form method="post" class="m-0">
-                                                {% csrf_token %}
-                                                <input type="hidden" name="mailbox_id" value="{{ mb.id }}">
-                                                <button type="submit" name="delete_mailbox" onclick="return confirm('Disconnect this mailbox?');"
-                                                        class="text-xs font-semibold text-error hover:bg-error-container/40 px-3 py-1.5 rounded transition-colors">
-                                                    Disconnect
-                                                </button>
-                                            </form>
-                                        </div>
-                                    {% endfor %}
-                                </div>
-                            {% else %}
-                                <p class="text-xs text-on-surface-variant italic">No mailboxes connected yet. Add your Gmail or Outlook account below.</p>
-                            {% endif %}
-                        </div>
-
-                        <!-- Connect New Mailbox Form -->
-                        <div class="bg-surface-container-low/60 rounded-lg p-4 border border-outline-variant/60">
-                            <h3 class="text-xs font-bold uppercase tracking-wider text-secondary mb-3">Connect Another Mailbox</h3>
-                            <form method="post" class="space-y-3">
-                                {% csrf_token %}
-                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                    <div>
-                                        <label class="block text-xs font-semibold text-on-surface mb-1">Platform</label>
-                                        {{ mailbox_form.platform }}
-                                    </div>
-                                    <div>
-                                        <label class="block text-xs font-semibold text-on-surface mb-1">Email Address</label>
-                                        {{ mailbox_form.email_address }}
-                                    </div>
-                                    <div>
-                                        <label class="block text-xs font-semibold text-on-surface mb-1">App Password / Password</label>
-                                        {{ mailbox_form.password }}
-                                    </div>
-                                    <div>
-                                        <label class="block text-xs font-semibold text-on-surface mb-1">IMAP Server</label>
-                                        {{ mailbox_form.imap_server }}
-                                    </div>
-                                    <div>
-                                        <label class="block text-xs font-semibold text-on-surface mb-1">IMAP Port</label>
-                                        {{ mailbox_form.imap_port }}
-                                    </div>
-                                </div>
-                                <p class="text-[11px] text-on-surface-variant mt-1">
-                                    💡 <em>Tip: For Gmail/Yahoo/Outlook, use an App Password generated in your account security settings.</em>
-                                </p>
-                                <button type="submit" name="save_mailbox" class="inline-flex items-center px-4 py-2 bg-primary text-on-primary text-xs font-semibold rounded hover:bg-primary-container transition-colors shadow-xs mt-2">
-                                    + Add Mailbox
-                                </button>
-                            </form>
-                        </div>
+                    <div class="status-live">
+                        <span class="status-live-dot"></span>
+                        Auth: {{ profile.masked_lm_studio_api_key }}
                     </div>
                 </div>
-            </section>
 
-            
-
+                <!-- Edit config form -->
+                <form method="post" style="margin:0;">
+                    {% csrf_token %}
+                    <div class="form-grid">
+                        <div class="form-field">
+                            <label class="field-label" for="{{ lm_config_form.lm_studio_url.id_for_label }}">Base URL</label>
+                            {{ lm_config_form.lm_studio_url }}
+                            <span class="field-hint">Default: <code>http://127.0.0.1:1234/v1</code></span>
+                        </div>
+                        <div class="form-field">
+                            <label class="field-label" for="{{ lm_config_form.lm_studio_model.id_for_label }}">Model ID</label>
+                            {{ lm_config_form.lm_studio_model }}
+                            <span class="field-hint">e.g. <code>qwen/qwen3-1.7b</code></span>
+                        </div>
+                        <div class="form-field full">
+                            <label class="field-label" for="{{ lm_config_form.lm_studio_api_key.id_for_label }}">API key <span style="font-weight:400;color:var(--faint);">(optional)</span></label>
+                            {{ lm_config_form.lm_studio_api_key }}
+                            <span class="field-hint">Leave blank for local LM Studio. Stored encrypted (AES/Fernet).</span>
+                        </div>
+                    </div>
+                    <div style="margin-top:14px;">
+                        <button class="btn-sm btn-primary" type="submit" name="save_lm_config">
+                            <span class="material-symbols-outlined" style="font-size:14px;">save</span>
+                            Save
+                        </button>
+                    </div>
+                </form>
+            </div>
         </div>
-    </main>
+    </div>
 
-    <script>
-        document.getElementById('theme-toggle')?.addEventListener('click', function() {
-            if (document.documentElement.classList.contains('dark')) {
-                document.documentElement.classList.remove('dark');
-                localStorage.setItem('theme', 'light');
-            } else {
-                document.documentElement.classList.add('dark');
-                localStorage.setItem('theme', 'dark');
-            }
-        });
-    </script>
+    <!-- ════════════════════════════════════════
+         3. TOPIC CLASSIFIERS
+    ════════════════════════════════════════ -->
+    <div class="settings-section">
+        <div class="section-layout">
+            <div class="section-meta">
+                <h2 class="section-title">
+                    <span class="material-symbols-outlined">label</span>
+                    Topics
+                </h2>
+                <p class="section-desc">
+                    Define what matters. The AI uses these to filter and summarise incoming email.
+                </p>
+            </div>
+
+            <div>
+                <!-- Existing topics -->
+                {% if topics %}
+                    <div class="list-rows">
+                        {% for topic in topics %}
+                            <div class="list-row">
+                                <div class="list-row-main">
+                                    <div class="list-row-icon">
+                                        <span class="material-symbols-outlined">tag</span>
+                                    </div>
+                                    <div class="list-row-text">
+                                        <div class="list-row-name">{{ topic.name }}</div>
+                                        {% if topic.description %}
+                                            <div class="list-row-detail" style="font-family:inherit;">{{ topic.description|truncatechars:80 }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="list-row-actions">
+                                    <a class="row-action-link" href="{% url 'edit_topic' topic.id %}">Edit</a>
+                                    <span class="row-action-sep">·</span>
+                                    <form method="post" action="{% url 'delete_topic' topic.id %}" style="margin:0;display:inline;">
+                                        {% csrf_token %}
+                                        <button class="row-action-delete" type="submit"
+                                                onclick="return confirm('Delete topic \'{{ topic.name }}\'?');">
+                                            Delete
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="empty-note">No topics yet — add one below.</p>
+                {% endif %}
+
+                <!-- Add topic form -->
+                <div class="add-form-section">
+                    <span class="add-form-label">Add topic</span>
+                    <form method="post" style="margin:0;">
+                        {% csrf_token %}
+                        <div class="form-grid">
+                            <div class="form-field">
+                                <label class="field-label">Topic name</label>
+                                <input type="text" name="name" required placeholder="e.g. Machine Learning Jobs">
+                            </div>
+                            <div class="form-field">
+                                <!-- spacer on desktop -->
+                            </div>
+                            <div class="form-field full">
+                                <label class="field-label">Description / keywords</label>
+                                <textarea name="description" required rows="3"
+                                          placeholder="Describe what emails to match — keywords, context, senders..."></textarea>
+                            </div>
+                        </div>
+                        <div style="margin-top:12px;">
+                            <button class="btn-sm btn-primary" type="submit" name="create_topic">Add topic</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ════════════════════════════════════════
+         4. CONNECTED MAILBOXES
+    ════════════════════════════════════════ -->
+    <div class="settings-section">
+        <div class="section-layout">
+            <div class="section-meta">
+                <h2 class="section-title">
+                    <span class="material-symbols-outlined">mark_email_read</span>
+                    Mailboxes
+                </h2>
+                <p class="section-desc">
+                    Connect Gmail, Outlook, Yahoo or any IMAP mailbox for background ingestion.
+                </p>
+                <div class="section-note">
+                    <span class="section-note-dot"></span>
+                    Passwords encrypted at rest
+                </div>
+            </div>
+
+            <div>
+                <!-- Connected mailboxes -->
+                {% if mailboxes %}
+                    <div class="list-rows">
+                        {% for mb in mailboxes %}
+                            <div class="list-row">
+                                <div class="list-row-main">
+                                    <div class="list-row-icon">
+                                        <span class="material-symbols-outlined">mail</span>
+                                    </div>
+                                    <div class="list-row-text">
+                                        <div class="list-row-name">
+                                            <span class="platform-tag">{{ mb.platform }}</span>
+                                            &nbsp;{{ mb.email_address }}
+                                        </div>
+                                        <div class="list-row-detail">{{ mb.imap_server }}:{{ mb.imap_port }} · SSL</div>
+                                    </div>
+                                </div>
+                                <div class="list-row-actions">
+                                    <form method="post" style="margin:0;display:inline;">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="mailbox_id" value="{{ mb.id }}">
+                                        <button class="row-action-delete" type="submit" name="delete_mailbox"
+                                                onclick="return confirm('Disconnect this mailbox?');">
+                                            Disconnect
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="empty-note">No mailboxes connected. Add one below.</p>
+                {% endif %}
+
+                <!-- Add mailbox form -->
+                <div class="add-form-section">
+                    <span class="add-form-label">Connect mailbox</span>
+                    <form method="post" style="margin:0;">
+                        {% csrf_token %}
+                        <div class="form-grid">
+                            <div class="form-field">
+                                <label class="field-label">Platform</label>
+                                {{ mailbox_form.platform }}
+                            </div>
+                            <div class="form-field">
+                                <label class="field-label">Email address</label>
+                                {{ mailbox_form.email_address }}
+                            </div>
+                            <div class="form-field">
+                                <label class="field-label">App password</label>
+                                {{ mailbox_form.password }}
+                            </div>
+                            <div class="form-field">
+                                <label class="field-label">IMAP server</label>
+                                {{ mailbox_form.imap_server }}
+                            </div>
+                            <div class="form-field">
+                                <label class="field-label">IMAP port</label>
+                                {{ mailbox_form.imap_port }}
+                            </div>
+                        </div>
+                        <p style="font-size:11px;color:var(--faint);margin:10px 0 14px;">
+                            For Gmail/Outlook/Yahoo use an App Password from your account security settings.
+                        </p>
+                        <button class="btn-sm btn-primary" type="submit" name="save_mailbox">Add mailbox</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</main>
+
+<script>
+    const toggle = document.getElementById('theme-toggle');
+    const icon   = document.getElementById('theme-icon');
+    function applyTheme() {
+        const dark = document.documentElement.classList.contains('dark');
+        icon.textContent = dark ? 'light_mode' : 'dark_mode';
+        icon.style.color = dark ? '#facc15' : '';
+    }
+    applyTheme();
+    toggle.addEventListener('click', () => {
+        document.documentElement.classList.toggle('dark');
+        localStorage.setItem('theme', document.documentElement.classList.contains('dark') ? 'dark' : 'light');
+        applyTheme();
+    });
+</script>
+
 </body>
 </html>

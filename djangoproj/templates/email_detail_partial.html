@@ -1,0 +1,77 @@
+{% load tz %}
+<!-- Topic pills -->
+{% if matches %}
+    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;">
+        {% for match in matches %}
+            <div class="topic-pill">
+                <span class="topic-pill-dot"></span>
+                {{ match.topic.name }}
+            </div>
+        {% endfor %}
+    </div>
+{% endif %}
+
+<!-- Subject -->
+<h1 class="email-subject-heading">{{ email.subject }}</h1>
+
+<!-- Meta -->
+<div class="email-meta-row">
+    <strong>{{ email.sender|truncatechars:60 }}</strong>
+    <span class="email-meta-divider">·</span>
+    <span>{{ email.platform }}</span>
+    <span class="email-meta-divider">·</span>
+    <span>{{ email.received_at|date:"M j, Y, g:i A" }}</span>
+</div>
+{% if email.recipient %}
+<div class="email-meta-row">
+    <span style="color:var(--faint);">To:</span>
+    <strong>{{ email.recipient }}</strong>
+</div>
+{% endif %}
+
+<!-- AI summary block: left accent bar + tinted bg -->
+{% if matches %}
+    {% for match in matches %}
+        {% if match.formatted_summary_html %}
+            <div style="
+                margin-top: 20px;
+                border-left: 3px solid var(--accent);
+                background: var(--ai-bg);
+                border-radius: 0 5px 5px 0;
+                padding: 14px 16px;
+            ">
+                {% if matches|length > 1 %}
+                    <div class="topic-pill" style="margin-bottom:8px;">
+                        <span class="topic-pill-dot"></span>{{ match.topic.name }}
+                    </div>
+                {% endif %}
+                <div class="ai-label" style="margin-bottom:6px;">AI summary</div>
+                <div class="ai-text">{{ match.formatted_summary_html }}</div>
+            </div>
+        {% endif %}
+    {% endfor %}
+{% endif %}
+
+<!-- Message body: stepped bg zone -->
+<div style="
+    margin-top: 24px;
+    border-top: 1px solid var(--border);
+    background: var(--bg);
+    margin-left: -28px; margin-right: -28px;
+    padding: 16px 28px 24px;
+">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+        <span class="ai-label" style="margin:0;">Message</span>
+        <a href="{% url 'email_content' email.id %}" target="_blank" rel="noopener noreferrer"
+           style="font-size:11px;font-weight:500;color:var(--accent);text-decoration:none;display:inline-flex;align-items:center;gap:3px;">
+            Open in new tab
+            <span class="material-symbols-outlined" style="font-size:13px;">open_in_new</span>
+        </a>
+    </div>
+    {{ email.body|json_script:"email-body-data" }}
+    <iframe id="email-frame"
+            title="Email body"
+            sandbox="allow-same-origin allow-popups"
+            style="width:100%;min-height:400px;border:1px solid var(--border);background:#fff;display:block;border-radius:4px;">
+    </iframe>
+</div>

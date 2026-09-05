@@ -88,15 +88,19 @@ class InboxView(LoginRequiredMixin, View):
 class EmailDetailView(LoginRequiredMixin, View):
     """
     Normal email reading view: shows headers, AI summary if matched, and full body.
+    Supports ?partial=1 for AJAX loading into the inbox reading pane.
     """
     def get(self, request, pk):
         email_obj = get_object_or_404(Email, pk=pk, owner=request.user)
         matches = EmailMatch.objects.filter(email=email_obj, user=request.user).select_related('topic')
 
-        return render(request, 'email_detail.html', {
-            'email': email_obj,
-            'matches': matches,
-        })
+        ctx = {'email': email_obj, 'matches': matches}
+
+        # Partial mode: return only the reading-pane fragment (no <html>/<head>/header)
+        if request.GET.get('partial') == '1':
+            return render(request, 'email_detail_partial.html', ctx)
+
+        return render(request, 'email_detail.html', ctx)
 
 
 from django.views.decorators.clickjacking import xframe_options_exempt
