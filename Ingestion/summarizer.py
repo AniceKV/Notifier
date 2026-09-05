@@ -100,14 +100,13 @@ def evaluate_and_summarize(
         client = OpenAI(base_url=base_url, api_key=active_key, timeout=35.0)
     except Exception as err:
         elapsed_ms = round((time.perf_counter() - start_time) * 1000.0, 2)
-        fallback = f"### Summary\n(Notice: Could not initialize OpenAI client for LM Studio: {err})\nEmail: {email_subject}\n\n### Content\n{email_body[:400]}..."
         diag = {
             "status": "CLIENT_INIT_ERROR",
             "elapsed_ms": elapsed_ms,
             "raw_response": str(err),
             "reason": f"Failed to initialize OpenAI client: {err}"
         }
-        return (True, fallback, diag) if return_diagnostics else (True, fallback)
+        return (False, None, diag) if return_diagnostics else (False, None)
 
     prompt = f"""You are an intelligent email assistant.
 The user is tracking the following topic:
@@ -175,11 +174,10 @@ RELEVANT: YES
     except Exception as e:
         elapsed_ms = round((time.perf_counter() - start_time) * 1000.0, 2)
         print(f"LM Studio LLM notice ({active_model}): {e}")
-        fallback = f"### Summary\n(API Note: LM Studio error: {e})\nEmail: {email_subject}\n\n### Content\n{email_body[:400]}..."
         diag = {
             "status": "API_ERROR",
             "elapsed_ms": elapsed_ms,
             "raw_response": str(e),
             "reason": f"LM Studio Error: {e}"
         }
-        return (True, fallback, diag) if return_diagnostics else (True, fallback)
+        return (False, None, diag) if return_diagnostics else (False, None)
