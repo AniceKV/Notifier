@@ -5,7 +5,7 @@ import secrets
 import urllib.error
 import urllib.parse
 import urllib.request
-from datetime import timedelta
+from datetime import datetime, timedelta, timezone as dt_timezone
 from typing import Dict, List, Optional, Tuple
 
 from django.utils import timezone
@@ -157,7 +157,7 @@ def register_gmail_watch(mailbox: UserMailbox) -> Tuple[bool, str]:
     expiration = resp.get("expiration")
     if expiration:
         try:
-            mailbox.webhook_expires_at = timezone.datetime.fromtimestamp(int(expiration) / 1000, tz=timezone.utc)
+            mailbox.webhook_expires_at = datetime.fromtimestamp(int(expiration) / 1000, tz=dt_timezone.utc)
         except Exception:
             mailbox.webhook_expires_at = timezone.now() + timedelta(hours=24)
     else:
