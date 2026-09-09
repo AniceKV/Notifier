@@ -20,9 +20,22 @@ GMAIL_HISTORY_URL = "https://gmail.googleapis.com/gmail/v1/users/me/history"
 OUTLOOK_SUBSCRIPTION_URL = "https://graph.microsoft.com/v1.0/subscriptions"
 OUTLOOK_MESSAGES_DELTA_URL = "https://graph.microsoft.com/v1.0/me/mailFolders/inbox/messages/delta"
 OUTLOOK_TOKEN_URL = "https://login.microsoftonline.com/common/oauth2/v2.0/token"
+ALLOWED_OUTBOUND_WEBHOOK_HOSTS = {
+    "gmail.googleapis.com",
+    "graph.microsoft.com",
+    "login.microsoftonline.com",
+}
+
+
+def _validate_outbound_url(url: str):
+    parsed = urllib.parse.urlparse(url)
+    host = (parsed.netloc or "").split(":")[0].lower()
+    if parsed.scheme != "https" or host not in ALLOWED_OUTBOUND_WEBHOOK_HOSTS:
+        raise ValueError(f"Blocked outbound webhook URL host: {host or 'unknown'}")
 
 
 def _request_json(url: str, method: str = "GET", body: Optional[Dict] = None, headers: Optional[Dict[str, str]] = None):
+    _validate_outbound_url(url)
     data = None
     req_headers = {"Accept": "application/json"}
     if headers:
