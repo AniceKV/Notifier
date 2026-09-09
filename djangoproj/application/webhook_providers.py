@@ -358,7 +358,20 @@ def _fetch_outlook_delta(mailbox: UserMailbox, context: Dict) -> Tuple[List[str]
         return [], mailbox.webhook_cursor
 
     delta_link = context.get("delta_token") or mailbox.webhook_cursor
-    url = delta_link if delta_link and delta_link.startswith("http") else OUTLOOK_MESSAGES_DELTA_URL
+    url = OUTLOOK_MESSAGES_DELTA_URL
+    if delta_link:
+        parsed = urllib.parse.urlparse(delta_link)
+        if parsed.netloc and parsed.netloc.lower() != "graph.microsoft.com":
+            delta_link = ""
+        query_source = parsed.query if parsed.query else delta_link
+        raw_params = urllib.parse.parse_qs(query_source, keep_blank_values=False) if query_source else {}
+        allowed_params = {}
+        for key in ("$deltatoken", "$skiptoken"):
+            value = raw_params.get(key)
+            if value:
+                allowed_params[key] = value[-1]
+        if allowed_params:
+            url = f"{OUTLOOK_MESSAGES_DELTA_URL}?{urllib.parse.urlencode(allowed_params)}"
 
     headers = {"Authorization": "Bearer " + token}
     try:
