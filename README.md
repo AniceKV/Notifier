@@ -7,9 +7,9 @@
 [![LM Studio](https://img.shields.io/badge/LM%20Studio-OpenAI%20Compatible-00ADD8?style=flat-square&logo=openai&logoColor=white)](https://lmstudio.ai/)
 [![Render](https://img.shields.io/badge/Render-Deploy%20Ready-46E3B7?style=flat-square&logo=render&logoColor=black)](https://render.com/)
 
-> **AI-Powered Inbox Intelligence, Background Sync & Multi-Stage Email Filtering Pipeline**
+> **AI-Powered Inbox Intelligence, Hybrid Webhook + Polling Sync & Multi-Stage Email Filtering Pipeline**
 
-Notifier is an intelligent email ingestion and relevance engine that continuously monitors incoming emails across multiple IMAP providers (Gmail, Outlook, Yahoo, iCloud, Custom IMAP), filters high-signal messages matching user-defined interest topics, generates structured AI summaries using local **LM Studio** models (e.g. `qwen/qwen3-1.7b` or any OpenAI-compatible LLM), and delivers instant push notifications directly to your mobile device.
+Notifier is an intelligent email ingestion and relevance engine that monitors incoming emails across multiple providers with a hybrid trigger model (Gmail Pub/Sub watch, Outlook Graph webhooks, and IMAP polling fallback for Yahoo/iCloud/Custom), filters high-signal messages matching user-defined interest topics, generates structured AI summaries using local **LM Studio** models (e.g. `qwen/qwen3-1.7b` or any OpenAI-compatible LLM), and delivers instant push notifications directly to your mobile device.
 
 ---
 
@@ -19,7 +19,10 @@ Notifier combines asynchronous worker queues with a two-stage cascaded filtering
 
 ```mermaid
 flowchart TD
-    Beat[Celery Beat Scheduler - Every 5 min] -->|Dispatches Task| Redis[(Redis Broker)]
+    Beat[Celery Beat Scheduler - Polling + Webhook Renewals] -->|Dispatches Task| Redis[(Redis Broker)]
+    GmailPush[Gmail API watch + Pub/Sub Push] -->|Webhook Event| Webhook[Django Webhook Endpoints]
+    OutlookPush[Microsoft Graph Subscriptions] -->|Webhook Event| Webhook
+    Webhook -->|Enqueue Targeted Sync| Redis
     Manual[Web UI / CLI Trigger] -->|Dispatches Task| Redis
     Redis -->|Polls Task| Worker[Celery Worker]
     Worker -->|IMAP SSL| Mailbox[User Mailboxes - Gmail, Outlook, Yahoo, iCloud]
@@ -50,7 +53,8 @@ flowchart TD
 ## Core Features
 
 - **Asynchronous Task Queue**: Background processing powered by Celery and Redis to prevent blocking web requests.
-- **Automated 5-Minute Polling**: Celery Beat scheduler continuously synchronizes connected mailboxes without manual intervention.
+- **Hybrid Triggering**: Gmail and Outlook can run event-driven webhook sync; Yahoo/iCloud/Custom continue on polling fallback.
+- **Safe Rollout Mode**: Optional webhook + polling parallel mode per mailbox for side-by-side verification.
 - **Instant Mobile Push Notifications**: Zero-setup alerts on your phone lock screen via `ntfy.sh` or Telegram with platform tags (`[Gmail]`, `[Outlook]`, etc.).
 - **LM Studio & Local AI Integration**: Full OpenAI-compatible REST API support for local inference (e.g. Qwen 3, Llama 3, Mistral) with zero cloud leaks and zero API costs.
 - **Platform Agnostic IMAP**: Connect any email provider (Gmail, Outlook, Yahoo, Apple iCloud, or custom corporate IMAP servers).
@@ -158,6 +162,18 @@ Once the server is running, complete these steps in the browser to start receivi
   - **Platform**: Select Gmail, Outlook, Yahoo, iCloud, or Custom IMAP.
   - **Email Address**: Your email address (e.g. `you@gmail.com`).
   - **App Password**: Your 16-character IMAP App Password (for Gmail, generate one in Google Account -> Security -> 2-Step Verification -> App Passwords).
+  - **Trigger Mode**: Polling, Webhook, or Auto.
+  - **Webhook Metadata JSON (optional)**:
+    - Gmail: `{"topic_name":"projects/<project>/topics/<topic>"}`
+    - Outlook: `{"callback_url":"https://<your-domain>/webhooks/outlook/","client_id":"...","client_secret":"..."}`
+
+#### Step 3.1: Configure Public Webhook Endpoints (for Gmail/Outlook)
+- Expose HTTPS routes:
+  - `https://<your-domain>/webhooks/gmail/`
+  - `https://<your-domain>/webhooks/outlook/`
+- Set `.env`:
+  - `GMAIL_WEBHOOK_SHARED_TOKEN=<long-random-token>`
+- Send this token in `X-Notifier-Webhook-Token` for Gmail Pub/Sub push delivery.
 
 #### Step 4: Define Interest Topics to Track
 - Under **AI Topic Classifiers**, click **Add Topic**:
@@ -185,10 +201,9 @@ Notifier includes a ready-to-use `render.yaml` Blueprint specification for 1-cli
 - [x] Live model connectivity testing and discovery.
 - [x] Platform-agnostic IMAP credentials management with AES-256 encryption.
 - [x] Background asynchronous email synchronization via Celery + Redis worker queue.
-- [x] Automated 5-minute scheduled polling via Celery Beat.
+- [x] Automated polling plus webhook subscription renewal via Celery Beat.
 - [x] Instant mobile push notifications via ntfy.sh and Telegram.
 - [x] 1-Click local development orchestration script (`start.bat`).
 - [x] Production deployment configuration for Render (Gunicorn, WhiteNoise, PostgreSQL).
-- [ ] Email categorization rules and webhook actions.
+- [x] Hybrid webhook trigger support (Gmail watch, Outlook subscriptions, IMAP fallback).
 - [ ] Multi-account digest summary generation.
-

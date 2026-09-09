@@ -23,6 +23,7 @@ from Ingestion.embedder import TextEmbedder
 from Ingestion.similarity_filter import find_candidate_chunks, evaluate_chunk_similarities
 from Ingestion.summarizer import evaluate_and_summarize
 from Ingestion.email_parser import parse_email
+from application.webhook_providers import fetch_changed_message_ids
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from bs4 import BeautifulSoup
 
@@ -44,7 +45,12 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument('--user_id', type=int, default=None, help='Sync specifically for this user ID')
+        parser.add_argument('--mailbox_id', type=int, default=None, help='Sync specifically for this mailbox ID')
         parser.add_argument('--days', type=int, default=None, help='Optional override: look back N days instead of using last grabbed message timestamp')
+        parser.add_argument('--trigger_provider', type=str, default='', help='polling/gmail/outlook/imap')
+        parser.add_argument('--event_history_id', type=str, default='', help='Gmail history ID from webhook event')
+        parser.add_argument('--event_delta_token', type=str, default='', help='Outlook delta token/link from webhook event')
+        parser.add_argument('--event_message_ids', type=str, default='', help='Comma-separated provider message IDs from event')
 
     def handle(self, *args, **options):
         # Prevent Windows console UnicodeEncodeError on emojis/special characters
@@ -55,9 +61,17 @@ class Command(BaseCommand):
             pass
 
         target_user_id = options.get('user_id')
+        target_mailbox_id = options.get('mailbox_id')
+        trigger_provider = (options.get('trigger_provider') or '').strip().lower()
+        event_history_id = (options.get('event_history_id') or '').strip()
+        event_delta_token = (options.get('event_delta_token') or '').strip()
+        raw_event_ids = (options.get('event_message_ids') or '').strip()
+        event_message_ids = [v.strip() for v in raw_event_ids.split(',') if v.strip()] if raw_event_ids else []
 
         # 1. Look for configured mailboxes in database
-        if target_user_id:
+        if target_mailbox_id:
+            mailboxes = list(UserMailbox.objects.filter(id=target_mailbox_id, is_active=True))
+        elif target_user_id:
             mailboxes = list(UserMailbox.objects.filter(user_id=target_user_id, is_active=True))
         else:
             mailboxes = list(UserMailbox.objects.filter(is_active=True))
@@ -95,11 +109,44 @@ class Command(BaseCommand):
                 self.stderr.write(self.style.ERROR(f"Failed to connect to {mailbox.imap_server}: {err}"))
                 continue
 
+            webhook_message_ids = []
+            if trigger_provider in {"gmail", "outlook"}:
+                webhook_message_ids, _ = fetch_changed_message_ids(
+                    mailbox,
+                    trigger_context={
+                        "provider": trigger_provider,
+                        "history_id": event_history_id,
+                        "delta_token": event_delta_token,
+                        "message_ids": event_message_ids,
+                    },
+                )
+
+            targeted_message_ids = list(dict.fromkeys(webhook_message_ids or event_message_ids))
+
             # Look for the latest email already grabbed for this user & mailbox platform
             last_email = Email.objects.filter(owner=user, platform=mailbox.platform, received_at__isnull=False).order_by('-received_at').first()
             days_override = options.get('days')
 
-            if "gmail" in mailbox.imap_server.lower():
+            if targeted_message_ids:
+                self.stdout.write(f"Event-driven sync: attempting targeted fetch for {len(targeted_message_ids)} message id(s)...")
+                all_ids = []
+                for msg_id in targeted_message_ids:
+                    clean_id = msg_id.strip()
+                    if not clean_id:
+                        continue
+                    status, found = mail.search(None, 'HEADER', 'Message-ID', f'"{clean_id}"')
+                    if status == "OK" and found and found[0]:
+                        all_ids.extend(found[0].split())
+                email_ids = list(dict.fromkeys(all_ids))
+                if not email_ids:
+                    self.stdout.write("No IMAP matches for webhook IDs. Falling back to incremental query.")
+
+            if not targeted_message_ids or not email_ids:
+                email_ids = []
+
+            if email_ids:
+                status = "OK"
+            elif "gmail" in mailbox.imap_server.lower():
                 if days_override is not None:
                     query_str = f'"newer_than:{days_override}d"' if days_override > 0 else ""
                     self.stdout.write(f"Searching {mailbox.platform} (override: last {days_override} days)...")
@@ -115,6 +162,7 @@ class Command(BaseCommand):
                     status, messages = mail.search(None, "X-GM-RAW", query_str)
                 else:
                     status, messages = mail.search(None, "ALL")
+                email_ids = messages[0].split() if status == "OK" and messages and messages[0] else []
             else:
                 if days_override is not None:
                     if days_override > 0:
@@ -133,13 +181,13 @@ class Command(BaseCommand):
                     self.stdout.write(f"Initial sync: searching {mailbox.platform} for all emails...")
 
                 status, messages = mail.search(None, query_str)
+                email_ids = messages[0].split() if status == "OK" and messages and messages[0] else []
 
-            if status != "OK" or not messages[0]:
+            if status != "OK" or not email_ids:
                 self.stdout.write(self.style.SUCCESS(f"No new emails found on {mailbox.platform}."))
                 mail.logout()
                 continue
 
-            email_ids = messages[0].split()
             self.stdout.write(f"Found {len(email_ids)} email(s) on {mailbox.platform}. Fetching...")
 
             # 1. Fetch & parse emails to sort them chronologically (oldest -> newest)

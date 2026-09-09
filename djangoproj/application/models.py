@@ -112,14 +112,47 @@ class UserMailbox(models.Model):
         ('iCloud', 'Apple iCloud'),
         ('Custom', 'Custom IMAP'),
     ]
+    PROVIDER_CHOICES = [
+        ('imap', 'IMAP (Polling/Idle)'),
+        ('gmail', 'Gmail API Watch'),
+        ('outlook', 'Microsoft Graph Webhook'),
+    ]
+    TRIGGER_MODE_CHOICES = [
+        ('polling', 'Polling'),
+        ('webhook', 'Webhook'),
+        ('auto', 'Auto (Best Available)'),
+    ]
+    WEBHOOK_STATUS_CHOICES = [
+        ('disabled', 'Disabled'),
+        ('pending', 'Pending'),
+        ('active', 'Active'),
+        ('error', 'Error'),
+    ]
 
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='mailboxes')
     platform = models.CharField(max_length=50, choices=PLATFORM_CHOICES, default='Gmail')
+    provider_type = models.CharField(max_length=20, choices=PROVIDER_CHOICES, default='imap')
+    trigger_mode = models.CharField(max_length=20, choices=TRIGGER_MODE_CHOICES, default='auto')
     email_address = models.EmailField()
     password = models.CharField(max_length=500)  # Encrypted App Password
     imap_server = models.CharField(max_length=150, default='imap.gmail.com')
     imap_port = models.IntegerField(default=993)
     is_active = models.BooleanField(default=True)
+    webhook_enabled = models.BooleanField(default=False)
+    webhook_compare_with_polling = models.BooleanField(default=True)
+    webhook_status = models.CharField(max_length=20, choices=WEBHOOK_STATUS_CHOICES, default='disabled')
+    webhook_subscription_id = models.CharField(max_length=255, blank=True, default='')
+    webhook_resource_id = models.CharField(max_length=255, blank=True, default='')
+    webhook_secret_token = models.CharField(max_length=500, blank=True, default='')
+    webhook_validation_token = models.CharField(max_length=500, blank=True, default='')
+    webhook_expires_at = models.DateTimeField(null=True, blank=True)
+    webhook_cursor = models.CharField(max_length=500, blank=True, default='')
+    webhook_last_event_at = models.DateTimeField(null=True, blank=True)
+    webhook_last_error = models.TextField(blank=True, default='')
+    webhook_event_meta = models.JSONField(default=dict, blank=True)
+    provider_access_token = models.CharField(max_length=1000, blank=True, default='')
+    provider_refresh_token = models.CharField(max_length=1000, blank=True, default='')
+    provider_token_expires_at = models.DateTimeField(null=True, blank=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
@@ -129,14 +162,111 @@ class UserMailbox(models.Model):
         from application.crypto import encrypt_credential
         if self.password and not self.password.startswith("enc::"):
             self.password = encrypt_credential(self.password)
+        if self.provider_access_token and not self.provider_access_token.startswith("enc::"):
+            self.provider_access_token = encrypt_credential(self.provider_access_token)
+        if self.provider_refresh_token and not self.provider_refresh_token.startswith("enc::"):
+            self.provider_refresh_token = encrypt_credential(self.provider_refresh_token)
+        if self.webhook_secret_token and not self.webhook_secret_token.startswith("enc::"):
+            self.webhook_secret_token = encrypt_credential(self.webhook_secret_token)
+        if self.webhook_validation_token and not self.webhook_validation_token.startswith("enc::"):
+            self.webhook_validation_token = encrypt_credential(self.webhook_validation_token)
+        if not self.provider_type:
+            self.provider_type = self.detect_provider_type()
         super().save(*args, **kwargs)
 
     def get_decrypted_password(self) -> str:
         from application.crypto import decrypt_credential
         return decrypt_credential(self.password)
 
+    def set_provider_access_token(self, value: str):
+        from application.crypto import encrypt_credential
+        self.provider_access_token = encrypt_credential(value.strip()) if value else ""
+
+    def get_provider_access_token(self) -> str:
+        from application.crypto import decrypt_credential
+        return decrypt_credential(self.provider_access_token)
+
+    def set_provider_refresh_token(self, value: str):
+        from application.crypto import encrypt_credential
+        self.provider_refresh_token = encrypt_credential(value.strip()) if value else ""
+
+    def get_provider_refresh_token(self) -> str:
+        from application.crypto import decrypt_credential
+        return decrypt_credential(self.provider_refresh_token)
+
+    def set_webhook_secret_token(self, value: str):
+        from application.crypto import encrypt_credential
+        self.webhook_secret_token = encrypt_credential(value.strip()) if value else ""
+
+    def get_webhook_secret_token(self) -> str:
+        from application.crypto import decrypt_credential
+        return decrypt_credential(self.webhook_secret_token)
+
+    def set_webhook_validation_token(self, value: str):
+        from application.crypto import encrypt_credential
+        self.webhook_validation_token = encrypt_credential(value.strip()) if value else ""
+
+    def get_webhook_validation_token(self) -> str:
+        from application.crypto import decrypt_credential
+        return decrypt_credential(self.webhook_validation_token)
+
+    def detect_provider_type(self) -> str:
+        if self.platform == "Gmail":
+            return "gmail"
+        if self.platform == "Outlook":
+            return "outlook"
+        return "imap"
+
+    def should_use_webhook(self) -> bool:
+        if not self.webhook_enabled:
+            return False
+        if self.trigger_mode == "polling":
+            return False
+        if self.trigger_mode == "webhook":
+            return self.provider_type in {"gmail", "outlook"}
+        return self.provider_type in {"gmail", "outlook"}
+
+    def should_poll(self) -> bool:
+        if self.trigger_mode == "polling":
+            return True
+        if self.should_use_webhook():
+            return self.webhook_compare_with_polling
+        return True
+
     def __str__(self):
         return f"{self.user.username} ({self.platform} - {self.email_address})"
+
+
+class WebhookEvent(models.Model):
+    PROVIDER_CHOICES = [
+        ('gmail', 'Gmail'),
+        ('outlook', 'Outlook'),
+        ('imap', 'IMAP'),
+        ('unknown', 'Unknown'),
+    ]
+    STATUS_CHOICES = [
+        ('received', 'Received'),
+        ('rejected', 'Rejected'),
+        ('queued', 'Queued'),
+        ('processed', 'Processed'),
+        ('error', 'Error'),
+    ]
+
+    mailbox = models.ForeignKey(UserMailbox, on_delete=models.CASCADE, related_name='webhook_events', null=True, blank=True)
+    provider = models.CharField(max_length=20, choices=PROVIDER_CHOICES, default='unknown')
+    event_type = models.CharField(max_length=100, blank=True, default='')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='received')
+    detail = models.TextField(blank=True, default='')
+    payload = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    processed_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        mailbox_part = self.mailbox.email_address if self.mailbox else "unknown-mailbox"
+        return f"{self.provider}:{self.status}:{mailbox_part}"
 
 
 class Email(models.Model):
@@ -255,4 +385,3 @@ class EmailMatch(models.Model):
             output_parts.append("</ul>")
 
         return mark_safe("".join(output_parts))
-

@@ -10,6 +10,8 @@ from application.views import (
     EmailContentView,
     ProfileView,
     SyncEmailsView,
+    GmailWebhookView,
+    OutlookWebhookView,
     TopicListView,
     TopicCreateView,
     TopicDeleteView,
@@ -25,6 +27,8 @@ urlpatterns = [
     path('emails/<int:pk>/content/', EmailContentView.as_view(), name='email_content'),
     path('profile/', ProfileView.as_view(), name='profile'),
     path('sync/', SyncEmailsView.as_view(), name='sync_emails'),
+    path('webhooks/gmail/', GmailWebhookView.as_view(), name='gmail_webhook'),
+    path('webhooks/outlook/', OutlookWebhookView.as_view(), name='outlook_webhook'),
 
     # Topics
     path('topics/', TopicListView.as_view(), name='topics'),

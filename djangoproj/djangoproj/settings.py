@@ -158,6 +158,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 LOGIN_REDIRECT_URL = "/"
 LOGOUT_REDIRECT_URL = "login"
 LOGIN_URL = "login"
+GMAIL_WEBHOOK_SHARED_TOKEN = os.getenv("GMAIL_WEBHOOK_SHARED_TOKEN", "")
 
 # Celery Configuration
 CELERY_BROKER_URL = os.getenv("CELERY_BROKER_URL", "redis://localhost:6379/0")
@@ -169,8 +170,12 @@ CELERY_TIMEZONE = TIME_ZONE
 # Celery Beat Settings
 from celery.schedules import crontab
 CELERY_BEAT_SCHEDULE = {
-    'sync-emails-every-5-minutes': {
+    'sync-polling-mailboxes-every-5-minutes': {
         'task': 'application.tasks.sync_all_users_emails',
         'schedule': crontab(minute='*/5'),
+    },
+    'renew-webhook-subscriptions-every-15-minutes': {
+        'task': 'application.tasks.renew_webhook_subscriptions',
+        'schedule': crontab(minute='*/15'),
     },
 }
