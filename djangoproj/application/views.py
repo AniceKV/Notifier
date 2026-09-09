@@ -171,7 +171,9 @@ class ProfileView(LoginRequiredMixin, View):
             'lm_studio_url': profile.get_lm_studio_url(),
             'lm_studio_model': profile.get_lm_studio_model(),
         })
-        mailbox_form = UserMailboxForm()
+        edit_mailbox_id = request.GET.get('edit_mailbox')
+        edit_mailbox = request.user.mailboxes.filter(id=edit_mailbox_id).first() if edit_mailbox_id else None
+        mailbox_form = UserMailboxForm(instance=edit_mailbox)
         mailboxes = request.user.mailboxes.all()
         topic_form = TopicForm()
         topics = request.user.topics.all()
@@ -182,6 +184,7 @@ class ProfileView(LoginRequiredMixin, View):
             'lm_config_form': lm_config_form,
             'mailbox_form': mailbox_form,
             'mailboxes': mailboxes,
+            'edit_mailbox': edit_mailbox,
             'topic_form': topic_form,
             'topics': topics,
         })
@@ -244,25 +247,68 @@ class ProfileView(LoginRequiredMixin, View):
             messages.success(request, "LM Studio configuration reset to local defaults (http://127.0.0.1:1234/v1, qwen/qwen3-1.7b).")
             return redirect('profile')
 
-        # 5. Add an IMAP mailbox
+        # 5. Toggle webhook for an existing mailbox
+        elif 'update_mailbox_webhook' in request.POST:
+            mailbox_id = request.POST.get('mailbox_id')
+            mailbox = request.user.mailboxes.filter(id=mailbox_id).first()
+            if mailbox:
+                mailbox.webhook_enabled = request.POST.get('webhook_enabled') == 'on'
+                mailbox.provider_type = mailbox.detect_provider_type()
+                if mailbox.webhook_enabled and mailbox.should_use_webhook():
+                    mailbox.webhook_status = 'pending'
+                    mailbox.save(update_fields=['webhook_enabled', 'provider_type', 'webhook_status', 'updated_at'])
+                    ok, detail = ensure_webhook_subscription(mailbox)
+                    if ok:
+                        messages.success(request, 'Webhook enabled and activated.')
+                    else:
+                        mailbox.webhook_status = 'error'
+                        mailbox.webhook_last_error = detail
+                        mailbox.save(update_fields=['webhook_status', 'webhook_last_error', 'updated_at'])
+                        messages.warning(request, f'Webhook is enabled but setup needs attention: {detail}')
+                else:
+                    mailbox.webhook_status = 'disabled'
+                    mailbox.save(update_fields=['webhook_enabled', 'provider_type', 'webhook_status', 'updated_at'])
+                    messages.success(request, 'Webhook disabled.')
+            return redirect('profile')
+
+        # 6. Add or update an IMAP mailbox
         elif 'save_mailbox' in request.POST:
-            mailbox_form = UserMailboxForm(request.POST)
+            mailbox_id = request.POST.get('mailbox_id')
+            existing_mailbox = request.user.mailboxes.filter(id=mailbox_id).first() if mailbox_id else None
+            mailbox_form = UserMailboxForm(request.POST, instance=existing_mailbox)
             if mailbox_form.is_valid():
+                original_credentials = {
+                    'password': existing_mailbox.password if existing_mailbox else '',
+                    'provider_access_token': existing_mailbox.provider_access_token if existing_mailbox else '',
+                    'provider_refresh_token': existing_mailbox.provider_refresh_token if existing_mailbox else '',
+                }
                 mailbox = mailbox_form.save(commit=False)
                 mailbox.user = request.user
                 mailbox.provider_type = mailbox.detect_provider_type()
+                for field_name, original_value in original_credentials.items():
+                    if not mailbox_form.cleaned_data.get(field_name) and original_value:
+                        setattr(mailbox, field_name, original_value)
                 mailbox.save()
                 if mailbox.webhook_enabled and mailbox.should_use_webhook():
+                    mailbox.webhook_status = 'pending'
+                    mailbox.save(update_fields=['webhook_status', 'updated_at'])
                     ok, detail = ensure_webhook_subscription(mailbox)
                     if ok:
-                        messages.success(request, f"Added {mailbox.platform} mailbox and activated webhook trigger.")
+                        action = "updated" if existing_mailbox else "Added"
+                        messages.success(request, f"Mailbox {action} and webhook trigger activated.")
                     else:
+                        mailbox.webhook_status = 'error'
+                        mailbox.webhook_last_error = detail
+                        mailbox.save(update_fields=['webhook_status', 'webhook_last_error', 'updated_at'])
                         messages.warning(
                             request,
-                            f"Mailbox added, but webhook setup failed ({detail}). Fallback polling will continue."
+                            f"Mailbox {'updated' if existing_mailbox else 'added'}, but webhook setup failed ({detail}). Fallback polling will continue."
                         )
                 else:
-                    messages.success(request, f"Added {mailbox.platform} mailbox ({mailbox.email_address}) successfully.")
+                    mailbox.webhook_status = "disabled"
+                    mailbox.save(update_fields=["webhook_status", "updated_at"])
+                    action = "updated" if existing_mailbox else "Added"
+                    messages.success(request, f"Mailbox {action} ({mailbox.email_address}) successfully.")
                 return redirect('profile')
 
         # 6. Disconnect / delete a mailbox

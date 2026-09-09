@@ -97,7 +97,7 @@ def evaluate_and_summarize(
     active_key = (api_key or os.environ.get("LM_STUDIO_API_KEY") or DEFAULT_LM_STUDIO_API_KEY).strip()
 
     try:
-        client = OpenAI(base_url=base_url, api_key=active_key, timeout=35.0)
+        client = OpenAI(base_url=base_url, api_key=active_key, timeout=200.0)
     except Exception as err:
         elapsed_ms = round((time.perf_counter() - start_time) * 1000.0, 2)
         diag = {

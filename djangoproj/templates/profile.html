@@ -546,10 +546,20 @@
                                         </div>
                                         <div class="list-row-detail">
                                             {{ mb.imap_server }}:{{ mb.imap_port }} · SSL · Trigger: {{ mb.trigger_mode|title }} · Webhook: {{ mb.webhook_status|title }}
+                                            {% if mb.webhook_last_error %}<br><span style="color:#f87171;">{{ mb.webhook_last_error }}</span>{% endif %}
                                         </div>
                                     </div>
                                 </div>
                                 <div class="list-row-actions">
+                                    <form method="post" style="margin:0;display:inline-flex;align-items:center;gap:6px;">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="mailbox_id" value="{{ mb.id }}">
+                                        <input type="checkbox" name="webhook_enabled" class="h-4 w-4 accent-primary"
+                                               {% if mb.webhook_enabled %}checked{% endif %}
+                                               aria-label="Enable webhook for {{ mb.email_address }}">
+                                        <button class="row-action-delete" type="submit" name="update_mailbox_webhook">Save webhook</button>
+                                    </form>
+                                    <a class="row-action-delete" href="?edit_mailbox={{ mb.id }}">Edit</a>
                                     <form method="post" style="margin:0;display:inline;">
                                         {% csrf_token %}
                                         <input type="hidden" name="mailbox_id" value="{{ mb.id }}">
@@ -566,11 +576,12 @@
                     <p class="empty-note">No mailboxes connected. Add one below.</p>
                 {% endif %}
 
-                <!-- Add mailbox form -->
+                <!-- Add or edit mailbox form -->
                 <div class="add-form-section">
-                    <span class="add-form-label">Connect mailbox</span>
+                    <span class="add-form-label">{% if edit_mailbox %}Edit mailbox{% else %}Connect mailbox{% endif %}</span>
                     <form method="post" style="margin:0;">
                         {% csrf_token %}
+                        {% if edit_mailbox %}<input type="hidden" name="mailbox_id" value="{{ edit_mailbox.id }}">{% endif %}
                         <div class="form-grid">
                             <div class="form-field">
                                 <label class="field-label">Platform</label>
@@ -620,7 +631,8 @@
                         <p style="font-size:11px;color:var(--faint);margin:10px 0 14px;">
                             Gmail webhook metadata needs topic_name; Outlook webhook metadata needs callback_url, client_id and client_secret.
                         </p>
-                        <button class="btn-sm btn-primary" type="submit" name="save_mailbox">Add mailbox</button>
+                        <button class="btn-sm btn-primary" type="submit" name="save_mailbox">{% if edit_mailbox %}Save mailbox{% else %}Add mailbox{% endif %}</button>
+                        {% if edit_mailbox %}<a class="btn-sm" href="{% url 'profile' %}">Cancel</a>{% endif %}
                     </form>
                 </div>
             </div>

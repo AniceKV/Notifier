@@ -33,6 +33,12 @@ class UserProfileForm(forms.ModelForm):
 
 
 class UserMailboxForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance and self.instance.pk:
+            self.fields['password'].required = False
+            self.fields['password'].help_text = 'Leave blank to keep the current app password.'
+
     class Meta:
         model = UserMailbox
         fields = [
@@ -54,7 +60,7 @@ class UserMailboxForm(forms.ModelForm):
             'webhook_enabled': forms.CheckboxInput(attrs={'class': 'h-4 w-4 accent-primary'}),
             'webhook_compare_with_polling': forms.CheckboxInput(attrs={'class': 'h-4 w-4 accent-primary'}),
             'email_address': forms.EmailInput(attrs={'class': 'w-full h-9 px-3 bg-surface-container-lowest text-on-surface text-sm rounded border border-outline-variant focus:outline-none focus:ring-2 focus:ring-primary', 'placeholder': 'user@example.com'}),
-            'password': forms.PasswordInput(render_value=True, attrs={'class': 'w-full h-9 px-3 bg-surface-container-lowest text-on-surface text-sm rounded border border-outline-variant focus:outline-none focus:ring-2 focus:ring-primary', 'placeholder': 'App password'}),
+            'password': forms.PasswordInput(render_value=False, attrs={'class': 'w-full h-9 px-3 bg-surface-container-lowest text-on-surface text-sm rounded border border-outline-variant focus:outline-none focus:ring-2 focus:ring-primary', 'placeholder': 'App password'}),
             'imap_server': forms.TextInput(attrs={'class': 'w-full h-9 px-3 bg-surface-container-lowest text-on-surface text-sm rounded border border-outline-variant focus:outline-none focus:ring-2 focus:ring-primary', 'placeholder': 'imap.gmail.com'}),
             'imap_port': forms.NumberInput(attrs={'class': 'w-full h-9 px-3 bg-surface-container-lowest text-on-surface text-sm rounded border border-outline-variant focus:outline-none focus:ring-2 focus:ring-primary', 'placeholder': '993'}),
             'provider_access_token': forms.PasswordInput(render_value=False, attrs={'class': 'w-full h-9 px-3 bg-surface-container-lowest text-on-surface text-sm rounded border border-outline-variant focus:outline-none focus:ring-2 focus:ring-primary', 'placeholder': 'Provider OAuth access token (optional)'}),
