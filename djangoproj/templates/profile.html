@@ -544,7 +544,9 @@
                                             <span class="platform-tag">{{ mb.platform }}</span>
                                             &nbsp;{{ mb.email_address }}
                                         </div>
-                                        <div class="list-row-detail">{{ mb.imap_server }}:{{ mb.imap_port }} · SSL</div>
+                                        <div class="list-row-detail">
+                                            {{ mb.imap_server }}:{{ mb.imap_port }} · SSL · Trigger: {{ mb.trigger_mode|title }} · Webhook: {{ mb.webhook_status|title }}
+                                        </div>
                                     </div>
                                 </div>
                                 <div class="list-row-actions">
@@ -579,6 +581,18 @@
                                 {{ mailbox_form.email_address }}
                             </div>
                             <div class="form-field">
+                                <label class="field-label">Trigger mode</label>
+                                {{ mailbox_form.trigger_mode }}
+                            </div>
+                            <div class="form-field" style="display:flex;align-items:center;gap:8px;margin-top:24px;">
+                                {{ mailbox_form.webhook_enabled }}
+                                <label class="field-label" style="margin:0;">Enable webhook trigger</label>
+                            </div>
+                            <div class="form-field" style="display:flex;align-items:center;gap:8px;margin-top:24px;">
+                                {{ mailbox_form.webhook_compare_with_polling }}
+                                <label class="field-label" style="margin:0;">Keep polling in parallel (rollout mode)</label>
+                            </div>
+                            <div class="form-field">
                                 <label class="field-label">App password</label>
                                 {{ mailbox_form.password }}
                             </div>
@@ -590,9 +604,21 @@
                                 <label class="field-label">IMAP port</label>
                                 {{ mailbox_form.imap_port }}
                             </div>
+                            <div class="form-field">
+                                <label class="field-label">Provider access token (optional)</label>
+                                {{ mailbox_form.provider_access_token }}
+                            </div>
+                            <div class="form-field">
+                                <label class="field-label">Provider refresh token (optional)</label>
+                                {{ mailbox_form.provider_refresh_token }}
+                            </div>
+                            <div class="form-field" style="grid-column: span 2;">
+                                <label class="field-label">Webhook metadata JSON (optional)</label>
+                                {{ mailbox_form.webhook_event_meta }}
+                            </div>
                         </div>
                         <p style="font-size:11px;color:var(--faint);margin:10px 0 14px;">
-                            For Gmail/Outlook/Yahoo use an App Password from your account security settings.
+                            Gmail webhook metadata needs topic_name; Outlook webhook metadata needs callback_url, client_id and client_secret.
                         </p>
                         <button class="btn-sm btn-primary" type="submit" name="save_mailbox">Add mailbox</button>
                     </form>

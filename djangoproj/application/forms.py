@@ -35,17 +35,40 @@ class UserProfileForm(forms.ModelForm):
 class UserMailboxForm(forms.ModelForm):
     class Meta:
         model = UserMailbox
-        fields = ["platform", "email_address", "password", "imap_server", "imap_port"]
+        fields = [
+            "platform",
+            "trigger_mode",
+            "webhook_enabled",
+            "webhook_compare_with_polling",
+            "email_address",
+            "password",
+            "imap_server",
+            "imap_port",
+            "provider_access_token",
+            "provider_refresh_token",
+            "webhook_event_meta",
+        ]
         widgets = {
             'platform': forms.Select(attrs={'class': 'w-full h-9 px-3 bg-surface-container-lowest text-on-surface text-sm rounded border border-outline-variant focus:outline-none focus:ring-2 focus:ring-primary'}),
+            'trigger_mode': forms.Select(attrs={'class': 'w-full h-9 px-3 bg-surface-container-lowest text-on-surface text-sm rounded border border-outline-variant focus:outline-none focus:ring-2 focus:ring-primary'}),
+            'webhook_enabled': forms.CheckboxInput(attrs={'class': 'h-4 w-4 accent-primary'}),
+            'webhook_compare_with_polling': forms.CheckboxInput(attrs={'class': 'h-4 w-4 accent-primary'}),
             'email_address': forms.EmailInput(attrs={'class': 'w-full h-9 px-3 bg-surface-container-lowest text-on-surface text-sm rounded border border-outline-variant focus:outline-none focus:ring-2 focus:ring-primary', 'placeholder': 'user@example.com'}),
             'password': forms.PasswordInput(render_value=True, attrs={'class': 'w-full h-9 px-3 bg-surface-container-lowest text-on-surface text-sm rounded border border-outline-variant focus:outline-none focus:ring-2 focus:ring-primary', 'placeholder': 'App password'}),
             'imap_server': forms.TextInput(attrs={'class': 'w-full h-9 px-3 bg-surface-container-lowest text-on-surface text-sm rounded border border-outline-variant focus:outline-none focus:ring-2 focus:ring-primary', 'placeholder': 'imap.gmail.com'}),
             'imap_port': forms.NumberInput(attrs={'class': 'w-full h-9 px-3 bg-surface-container-lowest text-on-surface text-sm rounded border border-outline-variant focus:outline-none focus:ring-2 focus:ring-primary', 'placeholder': '993'}),
+            'provider_access_token': forms.PasswordInput(render_value=False, attrs={'class': 'w-full h-9 px-3 bg-surface-container-lowest text-on-surface text-sm rounded border border-outline-variant focus:outline-none focus:ring-2 focus:ring-primary', 'placeholder': 'Provider OAuth access token (optional)'}),
+            'provider_refresh_token': forms.PasswordInput(render_value=False, attrs={'class': 'w-full h-9 px-3 bg-surface-container-lowest text-on-surface text-sm rounded border border-outline-variant focus:outline-none focus:ring-2 focus:ring-primary', 'placeholder': 'Provider OAuth refresh token (optional)'}),
+            'webhook_event_meta': forms.Textarea(attrs={'class': 'w-full p-3 bg-surface-container-lowest text-on-surface text-xs rounded border border-outline-variant focus:outline-none focus:ring-2 focus:ring-primary font-mono', 'rows': 3, 'placeholder': '{"topic_name":"projects/xxx/topics/yyy","callback_url":"https://your.app/webhooks/outlook/","client_id":"...","client_secret":"..."}'}),
         }
         help_texts = {
             'password': 'For Gmail/Yahoo/Outlook, use an App Password generated in your account security settings. Stored encrypted.',
             'imap_server': 'e.g. imap.gmail.com, outlook.office365.com, imap.mail.yahoo.com, imap.mail.me.com',
+            'webhook_enabled': 'Enable webhook trigger path for Gmail/Outlook mailboxes when provider tokens are configured.',
+            'webhook_compare_with_polling': 'Keep polling in parallel while rolling out webhooks safely.',
+            'provider_access_token': 'Encrypted at rest. Required for Gmail watch / Outlook Graph webhook setup.',
+            'provider_refresh_token': 'Optional but recommended for Outlook token refresh.',
+            'webhook_event_meta': 'JSON metadata for webhook setup (topic_name, callback_url, client_id, client_secret).',
         }
 
 

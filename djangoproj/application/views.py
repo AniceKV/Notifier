@@ -1,5 +1,10 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import HttpResponse
+import hmac
+import json
+import secrets
+
+from django.conf import settings
+from django.http import HttpResponse, HttpResponseForbidden, JsonResponse
 from django.views import View
 from django.views.generic import ListView, CreateView, UpdateView, DeleteView, DetailView
 from django.urls import reverse_lazy
@@ -11,6 +16,11 @@ from django.utils import timezone
 from application.models import Topic, Email, EmailMatch, UserMailbox, UserProfile
 from application.forms import TopicForm, UserProfileForm, UserMailboxForm, LMStudioConfigForm, GeminiApiKeyForm
 from application.tasks import sync_mailbox_task
+from application.webhook_providers import (
+    ensure_webhook_subscription,
+    log_webhook_event,
+    parse_gmail_pubsub_payload,
+)
 from Ingestion.summarizer import test_lm_studio_connection
 
 
@@ -104,6 +114,7 @@ class EmailDetailView(LoginRequiredMixin, View):
 
 
 from django.views.decorators.clickjacking import xframe_options_exempt
+from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 
 
@@ -239,8 +250,19 @@ class ProfileView(LoginRequiredMixin, View):
             if mailbox_form.is_valid():
                 mailbox = mailbox_form.save(commit=False)
                 mailbox.user = request.user
+                mailbox.provider_type = mailbox.detect_provider_type()
                 mailbox.save()
-                messages.success(request, f"Added {mailbox.platform} mailbox ({mailbox.email_address}) successfully.")
+                if mailbox.webhook_enabled and mailbox.should_use_webhook():
+                    ok, detail = ensure_webhook_subscription(mailbox)
+                    if ok:
+                        messages.success(request, f"Added {mailbox.platform} mailbox and activated webhook trigger.")
+                    else:
+                        messages.warning(
+                            request,
+                            f"Mailbox added, but webhook setup failed ({detail}). Fallback polling will continue."
+                        )
+                else:
+                    messages.success(request, f"Added {mailbox.platform} mailbox ({mailbox.email_address}) successfully.")
                 return redirect('profile')
 
         # 6. Disconnect / delete a mailbox
@@ -281,6 +303,153 @@ class SyncEmailsView(LoginRequiredMixin, View):
 
         messages.success(request, "Sync started — new emails will appear in a moment.")
         return redirect('inbox')
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class GmailWebhookView(View):
+    """
+    Handles Gmail Pub/Sub push notifications and triggers mailbox-scoped sync tasks.
+    """
+    def post(self, request):
+        shared_token = getattr(settings, "GMAIL_WEBHOOK_SHARED_TOKEN", "") or ""
+        header_token = request.headers.get("X-Notifier-Webhook-Token", "")
+
+        if not shared_token or not secrets.compare_digest(shared_token, header_token):
+            log_webhook_event(provider="gmail", status="rejected", detail="Invalid shared token", payload={})
+            return HttpResponseForbidden("Forbidden")
+
+        payload = parse_gmail_pubsub_payload(request.body)
+        if not payload:
+            log_webhook_event(provider="gmail", status="rejected", detail="Invalid Pub/Sub payload", payload={})
+            return JsonResponse({"ok": False, "detail": "Invalid payload"}, status=400)
+
+        email_address = (payload.get("emailAddress") or "").strip().lower()
+        history_id = payload.get("historyId")
+        if not email_address:
+            log_webhook_event(provider="gmail", status="rejected", detail="Missing emailAddress in payload", payload=payload)
+            return JsonResponse({"ok": False, "detail": "Missing emailAddress"}, status=400)
+
+        mailbox = (
+            UserMailbox.objects.filter(
+                email_address__iexact=email_address,
+                provider_type="gmail",
+                webhook_enabled=True,
+                is_active=True,
+            )
+            .order_by("-updated_at")
+            .first()
+        )
+        if not mailbox:
+            log_webhook_event(provider="gmail", status="rejected", detail=f"Mailbox not found for {email_address}", payload=payload)
+            return JsonResponse({"ok": True, "detail": "No mailbox mapped"}, status=202)
+
+        mailbox.webhook_last_event_at = timezone.now()
+        mailbox.webhook_status = "active"
+        mailbox.webhook_last_error = ""
+        if history_id:
+            mailbox.webhook_cursor = str(history_id)
+        mailbox.save(update_fields=["webhook_last_event_at", "webhook_status", "webhook_last_error", "webhook_cursor", "updated_at"])
+
+        trigger_context = {
+            "provider": "gmail",
+            "history_id": str(history_id) if history_id else "",
+            "event_type": "gmail.watch.push",
+        }
+        sync_mailbox_task.delay(mailbox.id, trigger_context=trigger_context)
+        log_webhook_event(
+            mailbox=mailbox,
+            provider="gmail",
+            event_type="gmail.watch.push",
+            status="queued",
+            detail="Webhook accepted and sync task queued",
+            payload={"history_id": history_id, "email_address": email_address},
+        )
+        return JsonResponse({"ok": True})
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class OutlookWebhookView(View):
+    """
+    Handles Microsoft Graph webhook validation + change notifications.
+    """
+    def get(self, request):
+        validation_token = request.GET.get("validationToken")
+        if validation_token:
+            return HttpResponse(validation_token, content_type="text/plain")
+        return JsonResponse({"ok": True})
+
+    def post(self, request):
+        validation_token = request.GET.get("validationToken")
+        if validation_token:
+            return HttpResponse(validation_token, content_type="text/plain")
+
+        try:
+            body = json.loads((request.body or b"{}").decode("utf-8"))
+        except json.JSONDecodeError:
+            log_webhook_event(provider="outlook", status="rejected", detail="Invalid JSON", payload={})
+            return JsonResponse({"ok": False, "detail": "Invalid JSON"}, status=400)
+
+        notifications = body.get("value") or []
+        if not isinstance(notifications, list):
+            log_webhook_event(provider="outlook", status="rejected", detail="Missing value[] notifications", payload=body)
+            return JsonResponse({"ok": False, "detail": "Invalid payload"}, status=400)
+
+        queued = 0
+        rejected = 0
+        for item in notifications:
+            sub_id = item.get("subscriptionId") or ""
+            if not sub_id:
+                rejected += 1
+                continue
+
+            mailbox = (
+                UserMailbox.objects.filter(
+                    webhook_subscription_id=sub_id,
+                    provider_type="outlook",
+                    webhook_enabled=True,
+                    is_active=True,
+                )
+                .order_by("-updated_at")
+                .first()
+            )
+            if not mailbox:
+                rejected += 1
+                log_webhook_event(provider="outlook", status="rejected", detail=f"Unknown subscription {sub_id}", payload=item)
+                continue
+
+            expected_state = mailbox.get_webhook_secret_token()
+            provided_state = item.get("clientState") or ""
+            if not expected_state or not hmac.compare_digest(expected_state, provided_state):
+                rejected += 1
+                log_webhook_event(mailbox=mailbox, provider="outlook", status="rejected", detail="Invalid clientState", payload=item)
+                continue
+
+            resource_data = item.get("resourceData") or {}
+            message_id = resource_data.get("id")
+            delta_link = item.get("deltaLink") or mailbox.webhook_cursor
+            mailbox.webhook_last_event_at = timezone.now()
+            mailbox.webhook_status = "active"
+            mailbox.webhook_last_error = ""
+            mailbox.save(update_fields=["webhook_last_event_at", "webhook_status", "webhook_last_error", "updated_at"])
+
+            trigger_context = {
+                "provider": "outlook",
+                "delta_token": delta_link,
+                "message_ids": [message_id] if message_id else [],
+                "event_type": item.get("changeType") or "updated",
+            }
+            sync_mailbox_task.delay(mailbox.id, trigger_context=trigger_context)
+            queued += 1
+            log_webhook_event(
+                mailbox=mailbox,
+                provider="outlook",
+                event_type=trigger_context["event_type"],
+                status="queued",
+                detail="Webhook accepted and sync task queued",
+                payload={"subscription_id": sub_id, "message_id": message_id},
+            )
+
+        return JsonResponse({"ok": True, "queued": queued, "rejected": rejected})
 
 
 # --- Existing Topic CRUD views ---
